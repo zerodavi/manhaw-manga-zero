@@ -1,0 +1,136 @@
+/* style.css - Quiz Profissional */
+
+/* Variáveis de cores */
+:root {
+  --primary: #0ea5a4;      /* cor principal */
+  --primary-dark: #0b7271; /* hover */
+  --bg: #f4f6fb;           /* fundo da página */
+  --card-bg: #ffffff;       /* fundo dos cards */
+  --text: #0b1220;          /* cor do texto */
+  --correct: #16a34a;       /* resposta correta */
+  --wrong: #dc2626;         /* resposta errada */
+  --accent: #2563eb;        /* destaque secundário */
+}
+
+/* Reset e corpo */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 20px;
+}
+
+/* Cabeçalhos */
+h1, h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 2rem;
+  color: var(--primary);
+}
+
+h2 {
+  font-size: 1.5rem;
+  color: var(--text);
+}
+
+/* Contêiner principal */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Cards de categoria e quiz */
+.card {
+  background-color: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+/* Botões */
+button {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+  background-color: var(--primary);
+  color: #fff;
+}
+
+button:hover {
+  background-color: var(--primary-dark);
+}
+
+button.correct {
+  background-color: var(--correct);
+  color: white;
+}
+
+button.wrong {
+  background-color: var(--wrong);
+  color: white;
+}
+
+button#nextBtn {
+  background-color: var(--accent);
+}
+
+button#nextBtn:hover {
+  background-color: #1e40af;
+}
+
+/* Respostas */
+.answers {
+  margin-top: 15px;
+}
+
+/* Pontuação */
+#score {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 15px;
+  font-size: 1.1rem;
+}
+
+/* Reiniciar quiz */
+#restart {
+  width: 50%;
+  margin: 20px auto;
+  background-color: var(--accent);
+  font-weight: bold;
+}
+
+#restart:hover {
+  background-color: #1e40af;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  body { padding: 10px; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.2rem; }
+  button { font-size: 14px; padding: 10px; }
+  .card { padding: 15px; }
+}
