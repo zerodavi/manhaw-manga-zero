@@ -23,6 +23,67 @@ flex-direction:column;
 height:100vh;
 }
 
+/* TELA CADASTRO */
+#loginTela{
+position:fixed;
+inset:0;
+background:linear-gradient(135deg,#0f0f0f,#1c1c1c);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:999;
+padding:20px;
+}
+
+#loginBox{
+background:#1f1f1f;
+padding:30px;
+border-radius:18px;
+width:100%;
+max-width:360px;
+box-shadow:0 0 25px rgba(0,0,0,.5);
+text-align:center;
+}
+
+#loginBox h1{
+font-size:28px;
+margin-bottom:10px;
+color:#00c853;
+}
+
+#loginBox p{
+font-size:14px;
+color:#aaa;
+margin-bottom:20px;
+}
+
+#nomeInput{
+width:100%;
+padding:14px;
+border:none;
+border-radius:10px;
+font-size:16px;
+margin-bottom:15px;
+outline:none;
+}
+
+#entrarBtn{
+width:100%;
+padding:14px;
+border:none;
+border-radius:10px;
+font-size:16px;
+font-weight:bold;
+background:#00c853;
+color:#fff;
+cursor:pointer;
+}
+
+#entrarBtn:hover{
+opacity:.9;
+}
+
+/* CHAT */
 header{
 background:#00c853;
 padding:12px;
@@ -31,11 +92,6 @@ justify-content:space-between;
 align-items:center;
 font-size:20px;
 font-weight:bold;
-}
-
-#topoBtns{
-display:flex;
-gap:8px;
 }
 
 #chat{
@@ -52,7 +108,6 @@ padding:10px 14px;
 border-radius:12px;
 max-width:80%;
 word-break:break-word;
-animation:fade .2s ease;
 }
 
 .eu{
@@ -90,27 +145,24 @@ color:#111;
 cursor:pointer;
 font-weight:bold;
 }
-
-@keyframes fade{
-from{
-opacity:0;
-transform:translateY(10px);
-}
-to{
-opacity:1;
-transform:translateY(0);
-}
-}
 </style>
 </head>
 <body>
 
+<!-- TELA LOGIN -->
+<div id="loginTela">
+<div id="loginBox">
+<h1>Chat Online</h1>
+<p>Digite seu nome para entrar</p>
+
+<input type="text" id="nomeInput" placeholder="Seu nome">
+<button id="entrarBtn" onclick="salvarNome()">Entrar</button>
+</div>
+</div>
+
 <header>
 <span id="titulo"></span>
-
-<div id="topoBtns">
-<button onclick="editarNome()">Nome</button>
-</div>
+<button onclick="trocarNome()">Nome</button>
 </header>
 
 <div id="chat"></div>
@@ -131,41 +183,62 @@ const campo = document.getElementById("msg");
 
 let nome = localStorage.getItem("nome");
 
-if(!nome || nome.trim()==""){
-nome = prompt("Digite seu nome:");
-if(!nome || nome.trim()=="") nome = "Visitante";
-localStorage.setItem("nome",nome);
+if(nome && nome.trim()!=""){
+document.getElementById("loginTela").style.display="none";
+iniciarChat();
 }
 
-function atualizarTopo(){
+function salvarNome(){
+
+let valor = document.getElementById("nomeInput").value.trim();
+
+if(valor=="") return;
+
+nome = valor;
+
+localStorage.setItem("nome",nome);
+
+document.getElementById("loginTela").style.display="none";
+
+iniciarChat();
+}
+
+function trocarNome(){
+
+localStorage.removeItem("nome");
+location.reload();
+}
+
+function iniciarChat(){
+
 document.getElementById("titulo").innerText = "Chat - " + nome;
+
+carregar();
+
+cliente
+.channel("sala1")
+.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"mensagens"
+},
+(payload)=>{
+mostrar(payload.new.nome,payload.new.texto,payload.new.id);
+}
+)
+.subscribe();
 }
 
-function editarNome(){
-let novo = prompt("Novo nome:",nome);
+function mostrar(usuario,texto,id){
 
-if(!novo) return;
-
-novo = novo.trim();
-
-if(novo=="") return;
-
-nome = novo;
-
-localStorage.setItem("nome",nome);
-
-atualizarTopo();
-}
-
-function mostrar(usuario,texto,id=null){
-
-if(id && document.getElementById("msg_"+id)) return;
+if(document.getElementById("msg_"+id)) return;
 
 let div = document.createElement("div");
+div.id = "msg_"+id;
 
-if(id) div.id = "msg_" + id;
-
-div.className = "msg " + (usuario === nome ? "eu":"outro");
+div.className = "msg " + (usuario===nome ? "eu":"outro");
 
 div.innerHTML = "<b>"+usuario+"</b><br>"+texto;
 
@@ -175,14 +248,12 @@ chat.scrollTop = chat.scrollHeight;
 
 async function carregar(){
 
-chat.innerHTML = "";
+chat.innerHTML="";
 
-const {data,error} = await cliente
+const {data} = await cliente
 .from("mensagens")
 .select("*")
 .order("id",{ascending:true});
-
-if(error) return;
 
 data.forEach(item=>{
 mostrar(item.nome,item.texto,item.id);
@@ -195,7 +266,7 @@ let texto = campo.value.trim();
 
 if(texto=="") return;
 
-campo.value = "";
+campo.value="";
 
 await cliente
 .from("mensagens")
@@ -205,36 +276,15 @@ nome:nome,
 texto:texto
 }
 ]);
-
 }
 
 campo.addEventListener("keydown",function(e){
-if(e.key==="Enter"){
-enviar();
-}
+if(e.key==="Enter") enviar();
 });
 
-cliente
-.channel("sala1")
-.on(
-"postgres_changes",
-{
-event:"INSERT",
-schema:"public",
-table:"mensagens"
-},
-(payload)=>{
-mostrar(
-payload.new.nome,
-payload.new.texto,
-payload.new.id
-);
-}
-)
-.subscribe();
-
-atualizarTopo();
-carregar();
+document.getElementById("nomeInput").addEventListener("keydown",function(e){
+if(e.key==="Enter") salvarNome();
+});
 </script>
 
 </body>
