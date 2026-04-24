@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Chat Supabase</title>
+<title>Chat Online</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -36,7 +36,7 @@ gap:10px;
 padding:10px;
 border-radius:10px;
 max-width:80%;
-word-wrap:break-word;
+word-break:break-word;
 }
 .eu{
 background:#00c853;
@@ -48,8 +48,8 @@ align-self:flex-start;
 }
 footer{
 display:flex;
-padding:10px;
 gap:10px;
+padding:10px;
 background:#222;
 }
 input{
@@ -65,11 +65,7 @@ border:none;
 border-radius:8px;
 background:#00c853;
 color:#fff;
-font-size:16px;
 cursor:pointer;
-}
-button:hover{
-background:#00a844;
 }
 </style>
 </head>
@@ -85,45 +81,39 @@ background:#00a844;
 </footer>
 
 <script>
-const supabaseUrl = "https://swenhgmatpxuqjhdghuv.supabase.co";
-const supabaseKey = "sb_publishable__kkMzLJQtt_My1sPZZ35hw_vpsJV4HN";
+const url = "https://swenhgmatpxuqjhdghuv.supabase.co";
+const key = "sb_publishable__kkMzLJQtt_My1sPZZ35hw_vpsJV4HN";
 
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+const cliente = window.supabase.createClient(url, key);
 
 const chat = document.getElementById("chat");
 
 let nome = localStorage.getItem("nome");
 
 if(!nome){
-nome = prompt("Seu nome:");
+nome = prompt("Digite seu nome:");
 localStorage.setItem("nome", nome);
 }
 
-async function carregarMensagens(){
+function mostrar(usuario,texto){
+let div = document.createElement("div");
+div.className = "msg " + (usuario === nome ? "eu":"outro");
+div.innerHTML = "<b>"+usuario+"</b><br>"+texto;
+chat.appendChild(div);
+chat.scrollTop = chat.scrollHeight;
+}
+
+async function carregar(){
 chat.innerHTML = "";
 
-const { data, error } = await supabase
+const { data } = await cliente
 .from("mensagens")
 .select("*")
 .order("id",{ascending:true});
 
-if(error){
-console.log(error);
-return;
-}
-
 data.forEach(item=>{
 mostrar(item.nome,item.texto);
 });
-
-chat.scrollTop = chat.scrollHeight;
-}
-
-function mostrar(user,texto){
-let div = document.createElement("div");
-div.className = "msg " + (user===nome ? "eu":"outro");
-div.innerHTML = "<b>"+user+":</b><br>"+texto;
-chat.appendChild(div);
 }
 
 async function enviar(){
@@ -131,22 +121,15 @@ let texto = document.getElementById("msg").value.trim();
 
 if(texto=="") return;
 
-const { error } = await supabase
+await cliente
 .from("mensagens")
-.insert([
-{
-nome:nome,
-texto:texto
-}
-]);
+.insert([{nome:nome,texto:texto}]);
 
-if(!error){
-document.getElementById("msg").value="";
-}
+document.getElementById("msg").value = "";
 }
 
-supabase
-.channel("room1")
+cliente
+.channel("sala1")
 .on(
 "postgres_changes",
 {
@@ -156,12 +139,11 @@ table:"mensagens"
 },
 payload=>{
 mostrar(payload.new.nome,payload.new.texto);
-chat.scrollTop = chat.scrollHeight;
 }
 )
 .subscribe();
 
-carregarMensagens();
+carregar();
 </script>
 
 </body>
