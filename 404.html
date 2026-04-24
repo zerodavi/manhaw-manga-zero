@@ -15,7 +15,7 @@ box-sizing:border-box;
 }
 
 body{
-font-family:Arial, sans-serif;
+font-family:Arial,sans-serif;
 background:#111;
 color:#fff;
 display:flex;
@@ -91,10 +91,6 @@ cursor:pointer;
 font-weight:bold;
 }
 
-button:hover{
-opacity:.9;
-}
-
 @keyframes fade{
 from{
 opacity:0;
@@ -110,7 +106,7 @@ transform:translateY(0);
 <body>
 
 <header>
-<span id="titulo">Chat Online</span>
+<span id="titulo"></span>
 
 <div id="topoBtns">
 <button onclick="editarNome()">Nome</button>
@@ -137,21 +133,16 @@ let nome = localStorage.getItem("nome");
 
 if(!nome || nome.trim()==""){
 nome = prompt("Digite seu nome:");
-if(!nome || nome.trim()==""){
-nome = "Visitante";
-}
+if(!nome || nome.trim()=="") nome = "Visitante";
 localStorage.setItem("nome",nome);
 }
 
-mostrarNome();
-
-function mostrarNome(){
+function atualizarTopo(){
 document.getElementById("titulo").innerText = "Chat - " + nome;
 }
 
 function editarNome(){
-
-let novo = prompt("Digite seu novo nome:", nome);
+let novo = prompt("Novo nome:",nome);
 
 if(!novo) return;
 
@@ -163,17 +154,16 @@ nome = novo;
 
 localStorage.setItem("nome",nome);
 
-mostrarNome();
+atualizarTopo();
 }
-
-let mensagensMostradas = new Set();
 
 function mostrar(usuario,texto,id=null){
 
-if(id && mensagensMostradas.has(id)) return;
-if(id) mensagensMostradas.add(id);
+if(id && document.getElementById("msg_"+id)) return;
 
 let div = document.createElement("div");
+
+if(id) div.id = "msg_" + id;
 
 div.className = "msg " + (usuario === nome ? "eu":"outro");
 
@@ -186,7 +176,6 @@ chat.scrollTop = chat.scrollHeight;
 async function carregar(){
 
 chat.innerHTML = "";
-mensagensMostradas.clear();
 
 const {data,error} = await cliente
 .from("mensagens")
@@ -208,8 +197,6 @@ if(texto=="") return;
 
 campo.value = "";
 
-mostrar(nome,texto);
-
 await cliente
 .from("mensagens")
 .insert([
@@ -218,9 +205,10 @@ nome:nome,
 texto:texto
 }
 ]);
+
 }
 
-campo.addEventListener("keypress",function(e){
+campo.addEventListener("keydown",function(e){
 if(e.key==="Enter"){
 enviar();
 }
@@ -245,6 +233,7 @@ payload.new.id
 )
 .subscribe();
 
+atualizarTopo();
 carregar();
 </script>
 
