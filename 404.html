@@ -1,159 +1,167 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Robot Mission</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chat Supabase</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body {
-  margin: 0;
-  background: radial-gradient(#0b1d2a, #000);
-  font-family: Arial, sans-serif;
-  color: #00e5ff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+body{
+margin:0;
+font-family:Arial;
+background:#111;
+color:#fff;
+display:flex;
+flex-direction:column;
+height:100vh;
 }
-
-.menu {
-  text-align: center;
-  max-width: 620px;
+header{
+background:#222;
+padding:15px;
+text-align:center;
+font-size:22px;
+font-weight:bold;
 }
-
-h1 {
-  font-size: 48px;
-  margin-bottom: 8px;
-  text-shadow: 0 0 15px #00e5ff;
+#chat{
+flex:1;
+overflow-y:auto;
+padding:10px;
+display:flex;
+flex-direction:column;
+gap:10px;
 }
-
-p {
-  color: #ccc;
-  margin-bottom: 24px;
+.msg{
+padding:10px;
+border-radius:10px;
+max-width:80%;
+word-wrap:break-word;
 }
-
-button {
-  padding: 15px 40px;
-  font-size: 20px;
-  border: none;
-  border-radius: 8px;
-  background: #00e5ff;
-  color: #000;
-  cursor: pointer;
-  box-shadow: 0 0 20px #00e5ff;
-  transition: 0.2s;
+.eu{
+background:#00c853;
+align-self:flex-end;
 }
-
-button:hover {
-  background: #00bcd4;
+.outro{
+background:#333;
+align-self:flex-start;
 }
-
-.loading {
-  margin-top: 16px;
-  display: none;
-  font-size: 14px;
-  color: #aaa;
+footer{
+display:flex;
+padding:10px;
+gap:10px;
+background:#222;
 }
-
-.tip-box {
-  margin-top: 26px;
-  min-height: 40px;
-  font-size: 15px;
-  color: #ddd;
-  opacity: 0;
-  transition: opacity 0.6s ease;
+input{
+flex:1;
+padding:12px;
+border:none;
+border-radius:8px;
+font-size:16px;
 }
-
-.tip-box.show {
-  opacity: 1;
+button{
+padding:12px 18px;
+border:none;
+border-radius:8px;
+background:#00c853;
+color:#fff;
+font-size:16px;
+cursor:pointer;
 }
-
-.visitor-counter {
-  margin-top: 32px;
-  font-size: 13px;
-  color: #555;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.visitor-counter img {
-  margin-top: 6px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  height: 28px;
+button:hover{
+background:#00a844;
 }
 </style>
 </head>
-
 <body>
 
-<div class="menu">
-  <h1>ROBOT MISSION</h1>
-  <p>Um jogo de ação futurista</p>
+<header>Chat Online</header>
 
-  <button onclick="startGame()">▶ INICIAR</button>
+<div id="chat"></div>
 
-  <div class="tip-box" id="tip"></div>
-
-  <div class="loading" id="loading">
-    Carregando jogo...
-  </div>
-
-  <div class="visitor-counter">
-    <!--
-      Troque a URL abaixo pelo endereço real do seu site no Neocities.
-      Exemplo: https://seusite.neocities.org
-    -->
-    <img
-      src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Frobotmission.neocities.org&count_bg=%2300E5FF&title_bg=%23111827&icon_color=%23FFFFFF&title=Visitas&edge_flat=true"
-      alt="Contador de visitas"
-    />
-  </div>
-</div>
+<footer>
+<input type="text" id="msg" placeholder="Digite mensagem">
+<button onclick="enviar()">Enviar</button>
+</footer>
 
 <script>
-// =============================================
-// DICAS
-// =============================================
-const tips = [
-  "🔫 O revólver possui apenas 4 balas. Recarregue com sabedoria.",
-  "📦 Munição extra vai para a reserva automaticamente.",
-  "🔑 Baús só podem ser abertos com chave.",
-  "🏪 A loja vende chave, vida e munição.",
-  "🛡️ Alguns inimigos podem defender tiros.",
-  "🎯 Complete missões para ganhar moedas.",
-  "💣 Robôs atiradores explodem se você chegar perto.",
-  "⌨️ Use E para interagir e Espaço para atacar."
-];
+const supabaseUrl = "https://swenhgmatpxuqjhdghuv.supabase.co";
+const supabaseKey = "sb_publishable__kkMzLJQtt_My1sPZZ35hw_vpsJV4HN";
 
-tips.sort(() => Math.random() - 0.5);
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-let tipIndex = 0;
-const tipEl = document.getElementById("tip");
+const chat = document.getElementById("chat");
 
-function showTip() {
-  tipEl.classList.remove("show");
-  setTimeout(() => {
-    tipEl.textContent = tips[tipIndex];
-    tipEl.classList.add("show");
-    tipIndex = (tipIndex + 1) % tips.length;
-  }, 300);
+let nome = localStorage.getItem("nome");
+
+if(!nome){
+nome = prompt("Seu nome:");
+localStorage.setItem("nome", nome);
 }
 
-showTip();
-setInterval(showTip, 3500);
+async function carregarMensagens(){
+chat.innerHTML = "";
 
-// =============================================
-// INICIAR JOGO
-// =============================================
-function startGame() {
-  document.querySelector("button").style.display = "none";
-  document.getElementById("loading").style.display = "block";
-  setTimeout(() => {
-    window.location.href = "index.html";
-  }, 800);
+const { data, error } = await supabase
+.from("mensagens")
+.select("*")
+.order("id",{ascending:true});
+
+if(error){
+console.log(error);
+return;
 }
+
+data.forEach(item=>{
+mostrar(item.nome,item.texto);
+});
+
+chat.scrollTop = chat.scrollHeight;
+}
+
+function mostrar(user,texto){
+let div = document.createElement("div");
+div.className = "msg " + (user===nome ? "eu":"outro");
+div.innerHTML = "<b>"+user+":</b><br>"+texto;
+chat.appendChild(div);
+}
+
+async function enviar(){
+let texto = document.getElementById("msg").value.trim();
+
+if(texto=="") return;
+
+const { error } = await supabase
+.from("mensagens")
+.insert([
+{
+nome:nome,
+texto:texto
+}
+]);
+
+if(!error){
+document.getElementById("msg").value="";
+}
+}
+
+supabase
+.channel("room1")
+.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"mensagens"
+},
+payload=>{
+mostrar(payload.new.nome,payload.new.texto);
+chat.scrollTop = chat.scrollHeight;
+}
+)
+.subscribe();
+
+carregarMensagens();
 </script>
 
 </body>
