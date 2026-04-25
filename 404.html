@@ -328,50 +328,66 @@ function getCtx(){
   return audioCtx;
 }
 
+// Som de mensagem ENVIADA — sobe de 800Hz → 1500Hz em 0.1s
 function somEnviada(){
   const ctx = getCtx();
-  const t = ctx.currentTime;
+  const now = ctx.currentTime;
 
-  // Dois "bips" suaves ascendentes — estilo WhatsApp enviado
-  [0, 0.1].forEach((delay, i) => {
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(880 + i * 220, t + delay);
-    osc.frequency.exponentialRampToValueAtTime(1100 + i * 220, t + delay + 0.08);
-
-    gain.gain.setValueAtTime(0, t + delay);
-    gain.gain.linearRampToValueAtTime(0.18, t + delay + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.15);
-
-    osc.start(t + delay);
-    osc.stop(t + delay + 0.15);
-  });
-}
-
-function somRecebida(){
-  const ctx = getCtx();
-  const t = ctx.currentTime;
-
-  // Tom descendente suave — notificação discreta
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
 
   osc.type = "sine";
-  osc.frequency.setValueAtTime(1200, t);
-  osc.frequency.exponentialRampToValueAtTime(700, t + 0.18);
+  osc.frequency.setValueAtTime(800, now);
+  osc.frequency.exponentialRampToValueAtTime(1500, now + 0.1);
 
-  gain.gain.setValueAtTime(0, t);
-  gain.gain.linearRampToValueAtTime(0.15, t + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+  gain.gain.setValueAtTime(0.2, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
 
-  osc.start(t);
-  osc.stop(t + 0.22);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.1);
+}
+
+// Som de mensagem RECEBIDA — "Bi-Du" descendente em duas notas
+function somRecebida(){
+  const ctx = getCtx();
+
+  // --- Nota 1: "Bi" (900Hz → 700Hz) ---
+  const now1 = ctx.currentTime;
+  const osc1  = ctx.createOscillator();
+  const gain1 = ctx.createGain();
+
+  osc1.type = "sine";
+  osc1.frequency.setValueAtTime(900, now1);
+  osc1.frequency.exponentialRampToValueAtTime(700, now1 + 0.08);
+
+  gain1.gain.setValueAtTime(0.2, now1);
+  gain1.gain.exponentialRampToValueAtTime(0.0001, now1 + 0.08);
+
+  osc1.connect(gain1);
+  gain1.connect(ctx.destination);
+  osc1.start(now1);
+  osc1.stop(now1 + 0.08);
+
+  // --- Nota 2: "Du" (600Hz → 300Hz) — 100ms depois ---
+  setTimeout(() => {
+    const now2 = ctx.currentTime;
+    const osc2  = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(600, now2);
+    osc2.frequency.exponentialRampToValueAtTime(300, now2 + 0.1);
+
+    gain2.gain.setValueAtTime(0.2, now2);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now2 + 0.1);
+
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now2);
+    osc2.stop(now2 + 0.1);
+  }, 100);
 }
 // ────────────────────────────────────────────────────────────
 
@@ -461,7 +477,6 @@ function mostrar(usuario, texto, id, iconeUsuario){
   const sou_eu = usuario === nome;
   const avatarSrc = iconeUsuario || "perfil/icone1.png";
 
-  // Som apenas para mensagens recebidas (não as próprias)
   if(!sou_eu) somRecebida();
 
   let div = document.createElement("div");
@@ -488,13 +503,12 @@ async function carregar(){
     .select("*")
     .order("id", { ascending: true });
 
-  // Desativa o som durante o carregamento do histórico
-  const somRecebidaOriginal = somRecebida;
-  window.somRecebida = () => {};
+  const _som = somRecebida;
+  somRecebida = () => {};
   if(data) data.forEach(item => {
     mostrar(item.nome, item.texto, item.id, item.icone);
   });
-  window.somRecebida = somRecebidaOriginal;
+  somRecebida = _som;
 }
 
 async function enviar(){
