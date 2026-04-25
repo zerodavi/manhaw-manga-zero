@@ -8,7 +8,6 @@ function getCtx(){
   return audioCtx;
 }
 
-// Som de mensagem ENVIADA — sobe 800Hz → 1500Hz
 function somEnviada(){
   const ctx = getCtx();
   const now = ctx.currentTime;
@@ -25,11 +24,9 @@ function somEnviada(){
   osc.stop(now + 0.1);
 }
 
-// Som de mensagem RECEBIDA — "Bi-Du" descendente em duas notas
 function somRecebida(){
   const ctx = getCtx();
 
-  // Nota 1: "Bi" (900Hz → 700Hz)
   const now1 = ctx.currentTime;
   const osc1  = ctx.createOscillator();
   const gain1 = ctx.createGain();
@@ -43,7 +40,6 @@ function somRecebida(){
   osc1.start(now1);
   osc1.stop(now1 + 0.08);
 
-  // Nota 2: "Du" (600Hz → 300Hz) — 100ms depois
   setTimeout(() => {
     const now2 = ctx.currentTime;
     const osc2  = ctx.createOscillator();
@@ -70,12 +66,14 @@ const cliente = supabase.createClient(url, key);
 const chat  = document.getElementById("chat");
 const campo = document.getElementById("msg");
 
-let nome = localStorage.getItem("nome");
-let icone = localStorage.getItem("icone") || "perfil/icone1.png";
+let nome           = localStorage.getItem("nome");
+let icone          = localStorage.getItem("icone") || "perfil/icone1.png";
 let iconeSelecionado = icone;
+let salaAtual      = localStorage.getItem("sala") || "geral";  // 'geral' ou código privado
+let tipoSala       = "geral";   // 'geral' | 'privada'
+let canalAtivo     = null;      // referência ao canal Realtime ativo
 
 // ── LOGIN ─────────────────────────────────────────────────────
-// Marcar ícone salvo como selecionado
 document.querySelectorAll(".icone-opcao").forEach(el => {
   if(el.dataset.icone === icone){
     document.querySelectorAll(".icone-opcao").forEach(e => e.classList.remove("selecionado"));
@@ -89,9 +87,15 @@ function selecionarIcone(el){
   iconeSelecionado = el.dataset.icone;
 }
 
+// Entrada inicial
 if(nome && nome.trim() !== ""){
   document.getElementById("loginTela").style.display = "none";
-  iniciarChat();
+  // Se já tem sala salva, entra direto
+  if(salaAtual){
+    iniciarChat();
+  } else {
+    mostrarTelaSala();
+  }
 }
 
 function salvarNome(){
@@ -103,12 +107,8 @@ function salvarNome(){
   localStorage.setItem("icone", icone);
   document.getElementById("loginTela").style.display  = "none";
   document.getElementById("cancelarBtn").style.display = "none";
-  document.getElementById("entrarBtn").textContent     = "Entrar no Chat";
-  document.getElementById("titulo").innerText          = "Chat - " + nome;
-  document.getElementById("headerAvatar").src          = icone;
-  if(!document.getElementById("chat").children.length){
-    iniciarChat();
-  }
+  document.getElementById("entrarBtn").textContent     = "Continuar →";
+  mostrarTelaSala();
 }
 
 function trocarNome(){
@@ -122,21 +122,99 @@ function trocarNome(){
 function cancelarEdicao(){
   document.getElementById("loginTela").style.display  = "none";
   document.getElementById("cancelarBtn").style.display = "none";
-  document.getElementById("entrarBtn").textContent     = "Entrar no Chat";
+  document.getElementById("entrarBtn").textContent     = "Continuar →";
+}
+
+// ── TELA DE SALA ─────────────────────────────────────────────
+function mostrarTelaSala(){
+  // Pré-selecionar o tipo atual
+  if(salaAtual && salaAtual !== "geral"){
+    tipoSala = "privada";
+    document.getElementById("codigoSala").value = salaAtual.replace("privada_", "");
+    document.getElementById("camposPrivada").classList.add("visivel");
+    document.getElementById("btnSalaGeral").classList.remove("ativo");
+    document.getElementById("btnSalaPrivada").classList.add("ativo");
+  } else {
+    tipoSala = "geral";
+    document.getElementById("camposPrivada").classList.remove("visivel");
+    document.getElementById("btnSalaGeral").classList.add("ativo");
+    document.getElementById("btnSalaPrivada").classList.remove("ativo");
+  }
+  document.getElementById("salaTela").style.display = "flex";
+}
+
+function voltarParaLogin(){
+  document.getElementById("salaTela").style.display = "none";
+  // Só volta pro login se ainda não tem nome (fluxo inicial)
+  if(!nome){
+    document.getElementById("loginTela").style.display = "flex";
+  }
+}
+
+function escolherTipoSala(tipo){
+  tipoSala = tipo;
+
+  document.getElementById("btnSalaGeral").classList.toggle("ativo",   tipo === "geral");
+  document.getElementById("btnSalaPrivada").classList.toggle("ativo", tipo === "privada");
+
+  const campos = document.getElementById("camposPrivada");
+  if(tipo === "privada"){
+    campos.classList.add("visivel");
+    document.getElementById("codigoSala").focus();
+  } else {
+    campos.classList.remove("visivel");
+  }
+}
+
+function entrarNaSala(){
+  if(tipoSala === "privada"){
+    const codigo = document.getElementById("codigoSala").value.trim();
+    if(codigo === ""){
+      document.getElementById("codigoSala").focus();
+      document.getElementById("codigoSala").style.border = "2px solid #ff5252";
+      setTimeout(() => document.getElementById("codigoSala").style.border = "", 1500);
+      return;
+    }
+    salaAtual = "privada_" + codigo;
+  } else {
+    salaAtual = "geral";
+  }
+
+  localStorage.setItem("sala", salaAtual);
+  document.getElementById("salaTela").style.display = "none";
+  iniciarChat();
+}
+
+function abrirTrocaSala(){
+  // Desinscreve do canal atual antes de trocar
+  if(canalAtivo){
+    cliente.removeChannel(canalAtivo);
+    canalAtivo = null;
+  }
+  mostrarTelaSala();
 }
 
 // ── CHAT ──────────────────────────────────────────────────────
 function iniciarChat(){
+  // Atualiza header
   document.getElementById("titulo").innerText = "Chat - " + nome;
   document.getElementById("headerAvatar").src = icone;
+  atualizarBadgeSala();
+
+  // Desinscreve canal anterior se existir
+  if(canalAtivo){
+    cliente.removeChannel(canalAtivo);
+    canalAtivo = null;
+  }
 
   carregar();
 
-  cliente
-    .channel("sala1")
+  // Cria canal exclusivo para a sala atual
+  canalAtivo = cliente
+    .channel("canal_" + salaAtual)
     .on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "mensagens" },
+      { event: "INSERT", schema: "public", table: "mensagens", filter: `sala=eq.${salaAtual}` },
       (payload) => {
         mostrar(payload.new.nome, payload.new.texto, payload.new.id, payload.new.icone);
       }
@@ -144,10 +222,24 @@ function iniciarChat(){
     .subscribe();
 }
 
+function atualizarBadgeSala(){
+  const badge = document.getElementById("salaBadge");
+  if(salaAtual === "geral"){
+    badge.innerHTML = "🌐 Chat Geral";
+  } else {
+    const codigo = salaAtual.replace("privada_", "");
+    badge.innerHTML = `🔒 #${codigo}`;
+  }
+}
+
 function mostrar(usuario, texto, id, iconeUsuario){
   if(document.getElementById("msg_" + id)) return;
 
-  const sou_eu   = usuario === nome;
+  // Esconder aviso de sala vazia
+  const aviso = document.getElementById("avisoSala");
+  if(aviso) aviso.classList.remove("visivel");
+
+  const sou_eu    = usuario === nome;
   const avatarSrc = iconeUsuario || "perfil/icone1.png";
 
   if(!sou_eu) somRecebida();
@@ -169,20 +261,38 @@ function mostrar(usuario, texto, id, iconeUsuario){
 }
 
 async function carregar(){
-  chat.innerHTML = "";
+  // Limpa mensagens (mantém o aviso)
+  Array.from(chat.children).forEach(el => {
+    if(el.id !== "avisoSala") el.remove();
+  });
 
   const { data } = await cliente
     .from("mensagens")
     .select("*")
+    .eq("sala", salaAtual)
     .order("id", { ascending: true });
+
+  const aviso = document.getElementById("avisoSala");
 
   // Silencia sons durante carregamento do histórico
   const _som = somRecebida;
   somRecebida  = () => {};
-  if(data) data.forEach(item => {
-    mostrar(item.nome, item.texto, item.id, item.icone);
-  });
-  somRecebida  = _som;
+
+  if(data && data.length > 0){
+    if(aviso) aviso.classList.remove("visivel");
+    data.forEach(item => mostrar(item.nome, item.texto, item.id, item.icone));
+  } else {
+    // Mostra aviso só em salas privadas vazias
+    if(aviso){
+      if(salaAtual !== "geral"){
+        aviso.classList.add("visivel");
+      } else {
+        aviso.classList.remove("visivel");
+      }
+    }
+  }
+
+  somRecebida = _som;
 }
 
 async function enviar(){
@@ -194,7 +304,7 @@ async function enviar(){
 
   await cliente
     .from("mensagens")
-    .insert([{ nome: nome, texto: texto, icone: icone }]);
+    .insert([{ nome: nome, texto: texto, icone: icone, sala: salaAtual }]);
 }
 
 // ── EVENTOS ───────────────────────────────────────────────────
@@ -204,6 +314,10 @@ campo.addEventListener("keydown", function(e){
 
 document.getElementById("nomeInput").addEventListener("keydown", function(e){
   if(e.key === "Enter") salvarNome();
+});
+
+document.getElementById("codigoSala").addEventListener("keydown", function(e){
+  if(e.key === "Enter") entrarNaSala();
 });
 
 // Corrige altura no Android quando teclado abre/fecha
