@@ -4,349 +4,140 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Chat Online</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:Arial,sans-serif; background:#111; color:#fff; display:flex; flex-direction:column; height:100vh; }
 
-body{
-font-family:Arial,sans-serif;
-background:#111;
-color:#fff;
-display:flex;
-flex-direction:column;
-height:100vh;
-}
-
-/* ── TELAS MODAIS ── */
-.tela{
-position:fixed;
-inset:0;
-background:linear-gradient(135deg,#0f0f0f,#1c1c1c);
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:999;
-padding:20px;
-}
-
-.box{
-background:#1f1f1f;
-padding:30px;
-border-radius:18px;
-width:100%;
-max-width:380px;
-box-shadow:0 0 25px rgba(0,0,0,.5);
-text-align:center;
-}
-
+.tela{ position:fixed; inset:0; background:linear-gradient(135deg,#0f0f0f,#1c1c1c); display:flex; justify-content:center; align-items:center; z-index:999; padding:20px; }
+.box{ background:#1f1f1f; padding:30px; border-radius:18px; width:100%; max-width:380px; box-shadow:0 0 25px rgba(0,0,0,.5); text-align:center; }
 .box h1{ font-size:26px; margin-bottom:8px; color:#00c853; }
 .box p{ font-size:14px; color:#aaa; margin-bottom:20px; }
 
-/* INPUTS */
-.campo{
-width:100%;
-padding:14px;
-border:none;
-border-radius:10px;
-font-size:16px;
-margin-bottom:14px;
-outline:none;
-background:#2a2a2a;
-color:#fff;
-}
+.campo{ width:100%; padding:14px; border:none; border-radius:10px; font-size:16px; margin-bottom:14px; outline:none; background:#2a2a2a; color:#fff; }
 .campo::placeholder{ color:#666; }
 
-/* BOTÕES */
-.btn{
-width:100%;
-padding:14px;
-border:none;
-border-radius:10px;
-font-size:16px;
-font-weight:bold;
-cursor:pointer;
-transition:opacity .2s;
-margin-bottom:10px;
-}
+.btn{ width:100%; padding:14px; border:none; border-radius:10px; font-size:16px; font-weight:bold; cursor:pointer; transition:opacity .2s; margin-bottom:10px; }
 .btn:hover{ opacity:.9; }
 .btn-verde{ background:#00c853; color:#fff; }
 .btn-outline{ background:transparent; color:#aaa; border:2px solid #333; }
 
-/* ÍCONES */
 .icones-titulo{ font-size:13px; color:#aaa; margin-bottom:12px; text-align:left; }
-
-#iconeGrid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:12px;
-margin-bottom:20px;
-}
-
-.icone-opcao{
-cursor:pointer;
-border-radius:50%;
-border:3px solid transparent;
-transition:border-color .2s, transform .2s;
-aspect-ratio:1;
-overflow:hidden;
-}
+#iconeGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.icone-opcao{ cursor:pointer; border-radius:50%; border:3px solid transparent; transition:border-color .2s,transform .2s; aspect-ratio:1; overflow:hidden; }
 .icone-opcao img{ width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
 .icone-opcao:hover{ border-color:#00c853; transform:scale(1.08); }
 .icone-opcao.selecionado{ border-color:#00c853; box-shadow:0 0 10px rgba(0,200,83,.5); }
 
-/* ── SALA TELA ── */
 .sala-opcoes{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
-
-.sala-btn{
-padding:16px;
-border-radius:12px;
-border:2px solid #333;
-background:#2a2a2a;
-color:#fff;
-font-size:15px;
-cursor:pointer;
-transition: border-color .2s, background .2s;
-text-align:left;
-display:flex;
-align-items:center;
-gap:12px;
-}
+.sala-btn{ padding:16px; border-radius:12px; border:2px solid #333; background:#2a2a2a; color:#fff; font-size:15px; cursor:pointer; transition:border-color .2s,background .2s; text-align:left; display:flex; align-items:center; gap:12px; }
 .sala-btn:hover{ border-color:#00c853; background:#222; }
 .sala-btn.ativo{ border-color:#00c853; background:#162e1e; }
-
 .sala-icon{ font-size:24px; flex-shrink:0; }
 .sala-nome{ font-weight:bold; font-size:15px; }
 .sala-desc{ font-size:12px; color:#aaa; margin-top:2px; }
-
-.privada-campos{
-display:none;
-background:#2a2a2a;
-border-radius:12px;
-padding:16px;
-margin-bottom:14px;
-text-align:left;
-}
+.privada-campos{ display:none; background:#2a2a2a; border-radius:12px; padding:16px; margin-bottom:14px; text-align:left; }
 .privada-campos.visivel{ display:block; }
 .privada-campos label{ display:block; font-size:12px; color:#aaa; margin-bottom:6px; }
 .privada-campos .campo{ margin-bottom:0; }
 
-/* ── HEADER ── */
-header{
-background:#00c853;
-padding:10px 14px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-font-size:18px;
-font-weight:bold;
-gap:10px;
-}
-
+header{ background:#00c853; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; font-size:18px; font-weight:bold; gap:10px; }
 #headerPerfil{ display:flex; align-items:center; gap:10px; }
 #headerInfo{ display:flex; flex-direction:column; gap:2px; }
-
-#headerAvatar{
-width:38px;
-height:38px;
-border-radius:50%;
-object-fit:cover;
-border:2px solid rgba(255,255,255,.4);
-flex-shrink:0;
-}
-
+#headerAvatar{ width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,.4); flex-shrink:0; }
 #titulo{ font-size:16px; }
+#salaBadge{ font-size:11px; background:rgba(0,0,0,.25); padding:2px 8px; border-radius:20px; color:rgba(255,255,255,.85); display:inline-flex; align-items:center; gap:4px; width:fit-content; }
 
-#salaBadge{
-font-size:11px;
-background:rgba(0,0,0,.25);
-padding:2px 8px;
-border-radius:20px;
-color:rgba(255,255,255,.85);
-display:inline-flex;
-align-items:center;
-gap:4px;
-width:fit-content;
-}
-
-/* ── CHAT ── */
-#chat{
-flex:1;
-overflow-y:auto;
-padding:15px;
-display:flex;
-flex-direction:column;
-gap:10px;
-}
-
+#chat{ flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px; }
 .msg{ display:flex; align-items:flex-end; gap:8px; max-width:85%; }
 .msg.eu{ align-self:flex-end; flex-direction:row-reverse; }
 .msg.outro{ align-self:flex-start; }
-
-.msg-avatar{
-width:34px;
-height:34px;
-border-radius:50%;
-object-fit:cover;
-flex-shrink:0;
-border:2px solid #333;
-}
+.msg-avatar{ width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid #333; }
 .msg.eu .msg-avatar{ border-color:#00c853; }
-
-.msg-bubble{
-padding:10px 14px;
-border-radius:12px;
-word-break:break-word;
-max-width:100%;
-}
+.msg-bubble{ padding:10px 14px; border-radius:12px; word-break:break-word; max-width:100%; }
 .eu .msg-bubble{ background:#00c853; border-bottom-right-radius:4px; }
 .outro .msg-bubble{ background:#333; border-bottom-left-radius:4px; }
-
 .msg-nome{ font-size:11px; color:#aaa; margin-bottom:3px; }
 .eu .msg-nome{ text-align:right; }
 
-/* Aviso sala vazia */
-#avisoSala{
-display:none;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-gap:8px;
-color:#444;
-font-size:14px;
-padding:40px 20px;
-text-align:center;
-}
+#avisoSala{ display:none; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:#444; font-size:14px; padding:40px 20px; text-align:center; }
 #avisoSala.visivel{ display:flex; }
 #avisoSala .aviso-icon{ font-size:40px; }
 
-footer{
-display:flex;
-gap:10px;
-padding:10px;
-background:#222;
-}
-
-#msg{
-flex:1;
-padding:12px;
-border:none;
-border-radius:8px;
-font-size:16px;
-outline:none;
-background:#333;
-color:#fff;
-}
-
-footer button{
-padding:10px 16px;
-border:none;
-border-radius:8px;
-background:#00c853;
-color:#fff;
-cursor:pointer;
-font-weight:bold;
-font-size:15px;
-}
+footer{ display:flex; gap:10px; padding:10px; background:#222; }
+#msg{ flex:1; padding:12px; border:none; border-radius:8px; font-size:16px; outline:none; background:#333; color:#fff; }
+footer button{ padding:10px 16px; border:none; border-radius:8px; background:#00c853; color:#fff; cursor:pointer; font-weight:bold; font-size:15px; }
 footer button:hover{ opacity:.9; }
-
 #headerBtns{ display:flex; gap:8px; }
-#headerBtns button{
-padding:7px 12px;
-border:none;
-border-radius:8px;
-background:rgba(0,0,0,.2);
-color:#fff;
-cursor:pointer;
-font-size:13px;
-font-weight:bold;
-}
+#headerBtns button{ padding:7px 12px; border:none; border-radius:8px; background:rgba(0,0,0,.2); color:#fff; cursor:pointer; font-size:13px; font-weight:bold; }
 </style>
 </head>
 <body>
 
-<!-- ── TELA LOGIN ── -->
+<!-- TELA LOGIN -->
 <div id="loginTela" class="tela">
 <div class="box">
   <h1>Chat Online</h1>
   <p>Escolha um ícone e digite seu nome</p>
-
   <p class="icones-titulo">Escolha seu ícone de perfil:</p>
   <div id="iconeGrid">
     <div class="icone-opcao selecionado" data-icone="perfil/icone1.png" onclick="selecionarIcone(this)">
-      <img src="perfil/icone1.png" alt="Ícone 1" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🐱</span>'">
+      <img src="perfil/icone1.png" alt="1" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🐱</span>'">
     </div>
     <div class="icone-opcao" data-icone="perfil/icone2.png" onclick="selecionarIcone(this)">
-      <img src="perfil/icone2.png" alt="Ícone 2" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🐶</span>'">
+      <img src="perfil/icone2.png" alt="2" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🐶</span>'">
     </div>
     <div class="icone-opcao" data-icone="perfil/icone3.png" onclick="selecionarIcone(this)">
-      <img src="perfil/icone3.png" alt="Ícone 3" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🦊</span>'">
+      <img src="perfil/icone3.png" alt="3" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🦊</span>'">
     </div>
     <div class="icone-opcao" data-icone="perfil/icone4.png" onclick="selecionarIcone(this)">
-      <img src="perfil/icone4.png" alt="Ícone 4" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🐻</span>'">
+      <img src="perfil/icone4.png" alt="4" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🐻</span>'">
     </div>
   </div>
-
   <input type="text" id="nomeInput" class="campo" placeholder="Seu nome">
   <button id="entrarBtn" class="btn btn-verde" onclick="salvarNome()">Continuar →</button>
   <button id="cancelarBtn" onclick="cancelarEdicao()" style="display:none;width:100%;padding:12px;border:2px solid #333;border-radius:10px;font-size:15px;font-weight:bold;background:transparent;color:#aaa;cursor:pointer;">← Cancelar</button>
 </div>
 </div>
 
-<!-- ── TELA SALA ── -->
+<!-- TELA SALA -->
 <div id="salaTela" class="tela" style="display:none;">
 <div class="box">
   <h1>Escolher Sala</h1>
   <p>Onde você quer conversar?</p>
-
   <div class="sala-opcoes">
     <div class="sala-btn ativo" id="btnSalaGeral" onclick="escolherTipoSala('geral')">
       <span class="sala-icon">🌐</span>
-      <div>
-        <div class="sala-nome">Chat Geral</div>
-        <div class="sala-desc">Aberto para todos os usuários</div>
-      </div>
+      <div><div class="sala-nome">Chat Geral</div><div class="sala-desc">Aberto para todos os usuários</div></div>
     </div>
     <div class="sala-btn" id="btnSalaPrivada" onclick="escolherTipoSala('privada')">
       <span class="sala-icon">🔒</span>
-      <div>
-        <div class="sala-nome">Sala Privada</div>
-        <div class="sala-desc">Apenas quem tem o código entra</div>
-      </div>
+      <div><div class="sala-nome">Sala Privada</div><div class="sala-desc">Apenas quem tem o código entra</div></div>
     </div>
   </div>
-
   <div id="camposPrivada" class="privada-campos">
     <label>Código da sala (crie um novo ou use um existente):</label>
-    <input type="text" id="codigoSala" class="campo"
-           placeholder="Ex: amigos2024"
-           autocomplete="off"
-           oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9]/g,'')">
+    <input type="text" id="codigoSala" class="campo" placeholder="Ex: amigos2024" autocomplete="off"
+           oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9]/g,'')">
   </div>
-
   <button class="btn btn-verde" onclick="entrarNaSala()">Entrar na Sala</button>
   <button class="btn btn-outline" onclick="voltarParaLogin()">← Voltar</button>
 </div>
 </div>
 
-<!-- ── CHAT ── -->
+<!-- CHAT -->
 <header>
-<div id="headerPerfil">
-  <img id="headerAvatar" src="" alt="avatar">
-  <div id="headerInfo">
-    <span id="titulo"></span>
-    <span id="salaBadge"></span>
+  <div id="headerPerfil">
+    <img id="headerAvatar" src="" alt="avatar">
+    <div id="headerInfo">
+      <span id="titulo"></span>
+      <span id="salaBadge"></span>
+    </div>
   </div>
-</div>
-<div id="headerBtns">
-  <button onclick="abrirTrocaSala()">🚪 Sala</button>
-  <button onclick="trocarNome()">✏️ Nome</button>
-</div>
+  <div id="headerBtns">
+    <button id="btnSala">🚪 Sala</button>
+    <button id="btnNome">✏️ Nome</button>
+  </div>
 </header>
 
 <div id="chat">
@@ -358,10 +149,227 @@ font-weight:bold;
 </div>
 
 <footer>
-<input type="text" id="msg" placeholder="Digite mensagem..." autocomplete="off">
-<button onclick="enviar()">➤</button>
+  <input type="text" id="msg" placeholder="Digite mensagem..." autocomplete="off">
+  <button id="btnEnviar">➤</button>
 </footer>
 
-<script src="chat.js"></script>
+<script>
+// ── AUDIO ──────────────────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getCtx(){ if(!audioCtx) audioCtx = new AudioCtx(); if(audioCtx.state==="suspended") audioCtx.resume(); return audioCtx; }
+
+function somEnviada(){
+  const ctx=getCtx(), now=ctx.currentTime;
+  const osc=ctx.createOscillator(), gain=ctx.createGain();
+  osc.type="sine"; osc.frequency.setValueAtTime(800,now); osc.frequency.exponentialRampToValueAtTime(1500,now+0.1);
+  gain.gain.setValueAtTime(0.2,now); gain.gain.exponentialRampToValueAtTime(0.0001,now+0.1);
+  osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now+0.1);
+}
+
+function somRecebida(){
+  const ctx=getCtx(), now1=ctx.currentTime;
+  const osc1=ctx.createOscillator(), gain1=ctx.createGain();
+  osc1.type="sine"; osc1.frequency.setValueAtTime(900,now1); osc1.frequency.exponentialRampToValueAtTime(700,now1+0.08);
+  gain1.gain.setValueAtTime(0.2,now1); gain1.gain.exponentialRampToValueAtTime(0.0001,now1+0.08);
+  osc1.connect(gain1); gain1.connect(ctx.destination); osc1.start(now1); osc1.stop(now1+0.08);
+  setTimeout(()=>{
+    const now2=ctx.currentTime, osc2=ctx.createOscillator(), gain2=ctx.createGain();
+    osc2.type="sine"; osc2.frequency.setValueAtTime(600,now2); osc2.frequency.exponentialRampToValueAtTime(300,now2+0.1);
+    gain2.gain.setValueAtTime(0.2,now2); gain2.gain.exponentialRampToValueAtTime(0.0001,now2+0.1);
+    osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(now2); osc2.stop(now2+0.1);
+  },100);
+}
+
+// ── SUPABASE ──────────────────────────────────────────────────
+const SUPA_URL = "https://swenhgmatpxuqjhdghuv.supabase.co";
+const SUPA_KEY = "sb_publishable__kkMzLJQtt_My1sPZZ35hw_vpsJV4HN";
+const cliente  = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── ESTADO ────────────────────────────────────────────────────
+let nome           = localStorage.getItem("nome");
+let icone          = localStorage.getItem("icone") || "perfil/icone1.png";
+let iconeSelecionado = icone;
+let salaAtual      = localStorage.getItem("sala") || "geral";
+let tipoSala       = "geral";
+let canalAtivo     = null;
+
+const chatEl  = document.getElementById("chat");
+const campoEl = document.getElementById("msg");
+
+// ── ÍCONES ────────────────────────────────────────────────────
+document.querySelectorAll(".icone-opcao").forEach(el => {
+  if(el.dataset.icone === icone){
+    document.querySelectorAll(".icone-opcao").forEach(e => e.classList.remove("selecionado"));
+    el.classList.add("selecionado");
+  }
+});
+
+function selecionarIcone(el){
+  document.querySelectorAll(".icone-opcao").forEach(e => e.classList.remove("selecionado"));
+  el.classList.add("selecionado");
+  iconeSelecionado = el.dataset.icone;
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────
+if(nome && nome.trim() !== ""){
+  document.getElementById("loginTela").style.display = "none";
+  salaAtual ? iniciarChat() : mostrarTelaSala();
+}
+
+function salvarNome(){
+  const valor = document.getElementById("nomeInput").value.trim();
+  if(!valor) return;
+  nome = valor; icone = iconeSelecionado;
+  localStorage.setItem("nome", nome);
+  localStorage.setItem("icone", icone);
+  document.getElementById("loginTela").style.display  = "none";
+  document.getElementById("cancelarBtn").style.display = "none";
+  document.getElementById("entrarBtn").textContent     = "Continuar →";
+  mostrarTelaSala();
+}
+
+function trocarNome(){
+  document.getElementById("nomeInput").value           = nome || "";
+  document.getElementById("entrarBtn").textContent     = "Salvar";
+  document.getElementById("cancelarBtn").style.display = "block";
+  document.getElementById("loginTela").style.display   = "flex";
+  document.getElementById("nomeInput").focus();
+}
+
+function cancelarEdicao(){
+  document.getElementById("loginTela").style.display  = "none";
+  document.getElementById("cancelarBtn").style.display = "none";
+  document.getElementById("entrarBtn").textContent     = "Continuar →";
+}
+
+// ── TELA SALA ─────────────────────────────────────────────────
+function mostrarTelaSala(){
+  if(salaAtual && salaAtual !== "geral"){
+    tipoSala = "privada";
+    document.getElementById("codigoSala").value = salaAtual.replace("privada_","");
+    document.getElementById("camposPrivada").classList.add("visivel");
+    document.getElementById("btnSalaGeral").classList.remove("ativo");
+    document.getElementById("btnSalaPrivada").classList.add("ativo");
+  } else {
+    tipoSala = "geral";
+    document.getElementById("camposPrivada").classList.remove("visivel");
+    document.getElementById("btnSalaGeral").classList.add("ativo");
+    document.getElementById("btnSalaPrivada").classList.remove("ativo");
+  }
+  document.getElementById("salaTela").style.display = "flex";
+}
+
+function voltarParaLogin(){
+  document.getElementById("salaTela").style.display = "none";
+  if(!nome) document.getElementById("loginTela").style.display = "flex";
+}
+
+function escolherTipoSala(tipo){
+  tipoSala = tipo;
+  document.getElementById("btnSalaGeral").classList.toggle("ativo",   tipo==="geral");
+  document.getElementById("btnSalaPrivada").classList.toggle("ativo", tipo==="privada");
+  const campos = document.getElementById("camposPrivada");
+  if(tipo==="privada"){ campos.classList.add("visivel"); document.getElementById("codigoSala").focus(); }
+  else { campos.classList.remove("visivel"); }
+}
+
+function entrarNaSala(){
+  if(tipoSala==="privada"){
+    const codigo = document.getElementById("codigoSala").value.trim();
+    if(!codigo){
+      const el = document.getElementById("codigoSala");
+      el.focus(); el.style.border="2px solid #ff5252";
+      setTimeout(()=>el.style.border="",1500); return;
+    }
+    salaAtual = "privada_" + codigo;
+  } else {
+    salaAtual = "geral";
+  }
+  localStorage.setItem("sala", salaAtual);
+  document.getElementById("salaTela").style.display = "none";
+  iniciarChat();
+}
+
+async function abrirTrocaSala(){
+  if(canalAtivo){ await cliente.removeChannel(canalAtivo); canalAtivo = null; }
+  mostrarTelaSala();
+}
+
+// ── CHAT ──────────────────────────────────────────────────────
+async function iniciarChat(){
+  document.getElementById("titulo").innerText = "Chat - " + nome;
+  document.getElementById("headerAvatar").src = icone;
+  atualizarBadgeSala();
+  if(canalAtivo){ await cliente.removeChannel(canalAtivo); canalAtivo = null; }
+  carregar();
+  canalAtivo = cliente
+    .channel("canal_" + salaAtual + "_" + Date.now())
+    .on("postgres_changes",
+      { event:"INSERT", schema:"public", table:"mensagens", filter:`sala=eq.${salaAtual}` },
+      (payload) => mostrar(payload.new.nome, payload.new.texto, payload.new.id, payload.new.icone)
+    ).subscribe();
+}
+
+function atualizarBadgeSala(){
+  const badge = document.getElementById("salaBadge");
+  badge.innerHTML = salaAtual==="geral"
+    ? "🌐 Chat Geral"
+    : "🔒 #" + salaAtual.replace("privada_","");
+}
+
+function mostrar(usuario, texto, id, iconeUsuario){
+  if(document.getElementById("msg_"+id)) return;
+  document.getElementById("avisoSala").classList.remove("visivel");
+  const sou_eu = usuario===nome;
+  if(!sou_eu) somRecebida();
+  const div = document.createElement("div");
+  div.id = "msg_"+id;
+  div.className = "msg "+(sou_eu?"eu":"outro");
+  div.innerHTML = `
+    <img class="msg-avatar" src="${iconeUsuario||'perfil/icone1.png'}" alt="${usuario}" onerror="this.style.display='none'">
+    <div>
+      <div class="msg-nome">${sou_eu?"Você":usuario}</div>
+      <div class="msg-bubble">${texto}</div>
+    </div>`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+async function carregar(){
+  Array.from(chatEl.children).forEach(el => { if(el.id!=="avisoSala") el.remove(); });
+  const { data } = await cliente.from("mensagens").select("*").eq("sala",salaAtual).order("id",{ascending:true});
+  const _som = somRecebida; somRecebida = ()=>{};
+  if(data && data.length>0){
+    data.forEach(item => mostrar(item.nome, item.texto, item.id, item.icone));
+  } else if(salaAtual!=="geral"){
+    document.getElementById("avisoSala").classList.add("visivel");
+  }
+  somRecebida = _som;
+}
+
+async function enviar(){
+  const texto = campoEl.value.trim();
+  if(!texto) return;
+  campoEl.value = "";
+  somEnviada();
+  await cliente.from("mensagens").insert([{ nome, texto, icone, sala:salaAtual }]);
+}
+
+// ── EVENTOS (sem onclick inline nos botões principais) ─────────
+document.getElementById("btnSala").addEventListener("click", abrirTrocaSala);
+document.getElementById("btnNome").addEventListener("click", trocarNome);
+document.getElementById("btnEnviar").addEventListener("click", enviar);
+campoEl.addEventListener("keydown", e => { if(e.key==="Enter") enviar(); });
+document.getElementById("nomeInput").addEventListener("keydown", e => { if(e.key==="Enter") salvarNome(); });
+document.getElementById("codigoSala").addEventListener("keydown", e => { if(e.key==="Enter") entrarNaSala(); });
+
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", ()=>{
+    document.body.style.height = window.visualViewport.height+"px";
+    chatEl.scrollTop = chatEl.scrollHeight;
+  });
+}
+</script>
 </body>
 </html>
