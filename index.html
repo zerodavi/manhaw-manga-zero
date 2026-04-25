@@ -1,0 +1,50 @@
+<!-- ===================== index.html (PORTAL) ===================== -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Portal de Notícias</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<style>
+body{font-family:Arial;background:#0d1117;color:#fff;margin:0}
+header{background:#161b22;padding:15px;text-align:center}
+.container{padding:20px}
+.card{background:#161b22;padding:15px;margin-bottom:15px;border-radius:10px}
+img{max-width:100%;border-radius:10px}
+a{color:#58a6ff;text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>📰 Portal de Notícias</h1>
+  <a href="adm.html">Ir para ADM</a>
+</header>
+<div class="container" id="noticias"></div>
+
+<script>
+const client = supabase.createClient(
+  "https://gqwcgaahjqklgmrswytb.supabase.co",
+  "sb_publishable_bkCd5J8y1e4GszEv4S45yQ_YLZ48Wis"
+);
+
+async function carregarNoticias(){
+  const { data } = await client.from('noticias').select('*').order('id',{ascending:false});
+  const div = document.getElementById('noticias');
+  div.innerHTML = '';
+
+  data.forEach(n => {
+    div.innerHTML += `
+      <div class="card">
+        <h2>${n.titulo}</h2>
+        <img src="${n.imagem}">
+        <p>${n.conteudo.substring(0,100)}...</p>
+      </div>
+    `;
+  });
+}
+
+carregarNoticias();
+</script>
+</body>
+</html>
+
