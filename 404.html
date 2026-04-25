@@ -212,6 +212,8 @@ function selecionarIcone(el){
 }
 
 // ── LOGIN ─────────────────────────────────────────────────────
+let chatIniciado = false;
+
 if(nome && nome.trim() !== ""){
   document.getElementById("loginTela").style.display = "none";
   salaAtual ? iniciarChat() : mostrarTelaSala();
@@ -226,7 +228,14 @@ function salvarNome(){
   document.getElementById("loginTela").style.display  = "none";
   document.getElementById("cancelarBtn").style.display = "none";
   document.getElementById("entrarBtn").textContent     = "Continuar →";
-  mostrarTelaSala();
+
+  if(chatIniciado){
+    // Só atualiza o header — sem reiniciar o canal
+    document.getElementById("titulo").innerText = "Chat - " + nome;
+    document.getElementById("headerAvatar").src = icone;
+  } else {
+    mostrarTelaSala();
+  }
 }
 
 function trocarNome(){
@@ -298,6 +307,7 @@ async function abrirTrocaSala(){
 
 // ── CHAT ──────────────────────────────────────────────────────
 async function iniciarChat(){
+  chatIniciado = true;
   document.getElementById("titulo").innerText = "Chat - " + nome;
   document.getElementById("headerAvatar").src = icone;
   atualizarBadgeSala();
@@ -353,7 +363,12 @@ async function enviar(){
   if(!texto) return;
   campoEl.value = "";
   somEnviada();
-  await cliente.from("mensagens").insert([{ nome, texto, icone, sala:salaAtual }]);
+  // .select() retorna o registro inserido — renderiza na hora sem depender do Realtime
+  const { data } = await cliente
+    .from("mensagens")
+    .insert([{ nome, texto, icone, sala:salaAtual }])
+    .select();
+  if(data && data[0]) mostrar(data[0].nome, data[0].texto, data[0].id, data[0].icone);
 }
 
 // ── EVENTOS (sem onclick inline nos botões principais) ─────────
