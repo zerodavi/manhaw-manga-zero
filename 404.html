@@ -40,7 +40,7 @@ background:#1f1f1f;
 padding:30px;
 border-radius:18px;
 width:100%;
-max-width:360px;
+max-width:380px;
 box-shadow:0 0 25px rgba(0,0,0,.5);
 text-align:center;
 }
@@ -63,8 +63,52 @@ padding:14px;
 border:none;
 border-radius:10px;
 font-size:16px;
-margin-bottom:15px;
+margin-bottom:20px;
 outline:none;
+background:#2a2a2a;
+color:#fff;
+}
+
+/* SELEÇÃO DE ÍCONES */
+.icones-titulo{
+font-size:13px;
+color:#aaa;
+margin-bottom:12px;
+text-align:left;
+}
+
+#iconeGrid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:12px;
+margin-bottom:20px;
+}
+
+.icone-opcao{
+cursor:pointer;
+border-radius:50%;
+border:3px solid transparent;
+transition:border-color .2s, transform .2s;
+aspect-ratio:1;
+overflow:hidden;
+}
+
+.icone-opcao img{
+width:100%;
+height:100%;
+object-fit:cover;
+border-radius:50%;
+display:block;
+}
+
+.icone-opcao:hover{
+border-color:#00c853;
+transform:scale(1.08);
+}
+
+.icone-opcao.selecionado{
+border-color:#00c853;
+box-shadow:0 0 10px rgba(0,200,83,.5);
 }
 
 #entrarBtn{
@@ -77,6 +121,7 @@ font-weight:bold;
 background:#00c853;
 color:#fff;
 cursor:pointer;
+transition:opacity .2s;
 }
 
 #entrarBtn:hover{
@@ -86,12 +131,28 @@ opacity:.9;
 /* CHAT */
 header{
 background:#00c853;
-padding:12px;
+padding:10px 14px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-font-size:20px;
+font-size:18px;
 font-weight:bold;
+gap:10px;
+}
+
+#headerPerfil{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+#headerAvatar{
+width:38px;
+height:38px;
+border-radius:50%;
+object-fit:cover;
+border:2px solid rgba(255,255,255,.4);
+flex-shrink:0;
 }
 
 #chat{
@@ -104,20 +165,59 @@ gap:10px;
 }
 
 .msg{
+display:flex;
+align-items:flex-end;
+gap:8px;
+max-width:85%;
+}
+
+.msg.eu{
+align-self:flex-end;
+flex-direction:row-reverse;
+}
+
+.msg.outro{
+align-self:flex-start;
+}
+
+.msg-avatar{
+width:34px;
+height:34px;
+border-radius:50%;
+object-fit:cover;
+flex-shrink:0;
+border:2px solid #333;
+}
+
+.msg.eu .msg-avatar{
+border-color:#00c853;
+}
+
+.msg-bubble{
 padding:10px 14px;
 border-radius:12px;
-max-width:80%;
 word-break:break-word;
+max-width:100%;
 }
 
-.eu{
+.eu .msg-bubble{
 background:#00c853;
-align-self:flex-end;
+border-bottom-right-radius:4px;
 }
 
-.outro{
+.outro .msg-bubble{
 background:#333;
-align-self:flex-start;
+border-bottom-left-radius:4px;
+}
+
+.msg-nome{
+font-size:11px;
+color:#aaa;
+margin-bottom:3px;
+}
+
+.eu .msg-nome{
+text-align:right;
 }
 
 footer{
@@ -127,22 +227,45 @@ padding:10px;
 background:#222;
 }
 
-input{
+#msg{
 flex:1;
 padding:12px;
 border:none;
 border-radius:8px;
 font-size:16px;
 outline:none;
+background:#333;
+color:#fff;
 }
 
-button{
-padding:10px 14px;
+footer button{
+padding:10px 16px;
 border:none;
 border-radius:8px;
-background:#fff;
-color:#111;
+background:#00c853;
+color:#fff;
 cursor:pointer;
+font-weight:bold;
+font-size:15px;
+}
+
+footer button:hover{
+opacity:.9;
+}
+
+#headerBtns{
+display:flex;
+gap:8px;
+}
+
+#headerBtns button{
+padding:7px 12px;
+border:none;
+border-radius:8px;
+background:rgba(0,0,0,.2);
+color:#fff;
+cursor:pointer;
+font-size:13px;
 font-weight:bold;
 }
 </style>
@@ -153,137 +276,164 @@ font-weight:bold;
 <div id="loginTela">
 <div id="loginBox">
 <h1>Chat Online</h1>
-<p>Digite seu nome para entrar</p>
+<p>Escolha um ícone e digite seu nome</p>
+
+<p class="icones-titulo">Escolha seu ícone de perfil:</p>
+<div id="iconeGrid">
+  <div class="icone-opcao selecionado" data-icone="perfil/icone1.png" onclick="selecionarIcone(this)">
+    <img src="perfil/icone1.png" alt="Ícone 1" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🐱</span>'">
+  </div>
+  <div class="icone-opcao" data-icone="perfil/icone2.png" onclick="selecionarIcone(this)">
+    <img src="perfil/icone2.png" alt="Ícone 2" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🐶</span>'">
+  </div>
+  <div class="icone-opcao" data-icone="perfil/icone3.png" onclick="selecionarIcone(this)">
+    <img src="perfil/icone3.png" alt="Ícone 3" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🦊</span>'">
+  </div>
+  <div class="icone-opcao" data-icone="perfil/icone4.png" onclick="selecionarIcone(this)">
+    <img src="perfil/icone4.png" alt="Ícone 4" onerror="this.parentElement.innerHTML='<span style=font-size:30px;line-height:60px>🐻</span>'">
+  </div>
+</div>
 
 <input type="text" id="nomeInput" placeholder="Seu nome">
-<button id="entrarBtn" onclick="salvarNome()">Entrar</button>
+<button id="entrarBtn" onclick="salvarNome()">Entrar no Chat</button>
 </div>
 </div>
 
 <header>
-<span id="titulo"></span>
-<button onclick="trocarNome()">Nome</button>
+<div id="headerPerfil">
+  <img id="headerAvatar" src="" alt="avatar">
+  <span id="titulo"></span>
+</div>
+<div id="headerBtns">
+  <button onclick="trocarNome()">✏️ Nome</button>
+</div>
 </header>
 
 <div id="chat"></div>
 
 <footer>
 <input type="text" id="msg" placeholder="Digite mensagem..." autocomplete="off">
-<button onclick="enviar()">Enviar</button>
+<button onclick="enviar()">➤</button>
 </footer>
 
 <script>
 const url = "https://swenhgmatpxuqjhdghuv.supabase.co";
 const key = "sb_publishable__kkMzLJQtt_My1sPZZ35hw_vpsJV4HN";
 
-const cliente = supabase.createClient(url,key);
+const cliente = supabase.createClient(url, key);
 
 const chat = document.getElementById("chat");
 const campo = document.getElementById("msg");
 
 let nome = localStorage.getItem("nome");
+let icone = localStorage.getItem("icone") || "perfil/icone1.png";
+let iconeSelecionado = icone;
 
-if(nome && nome.trim()!=""){
-document.getElementById("loginTela").style.display="none";
-iniciarChat();
+// Marcar ícone salvo como selecionado
+document.querySelectorAll(".icone-opcao").forEach(el => {
+  if(el.dataset.icone === icone){
+    document.querySelectorAll(".icone-opcao").forEach(e => e.classList.remove("selecionado"));
+    el.classList.add("selecionado");
+  }
+});
+
+function selecionarIcone(el){
+  document.querySelectorAll(".icone-opcao").forEach(e => e.classList.remove("selecionado"));
+  el.classList.add("selecionado");
+  iconeSelecionado = el.dataset.icone;
+}
+
+if(nome && nome.trim() !== ""){
+  document.getElementById("loginTela").style.display = "none";
+  iniciarChat();
 }
 
 function salvarNome(){
-
-let valor = document.getElementById("nomeInput").value.trim();
-
-if(valor=="") return;
-
-nome = valor;
-
-localStorage.setItem("nome",nome);
-
-document.getElementById("loginTela").style.display="none";
-
-iniciarChat();
+  let valor = document.getElementById("nomeInput").value.trim();
+  if(valor === "") return;
+  nome = valor;
+  icone = iconeSelecionado;
+  localStorage.setItem("nome", nome);
+  localStorage.setItem("icone", icone);
+  document.getElementById("loginTela").style.display = "none";
+  iniciarChat();
 }
 
 function trocarNome(){
-
-localStorage.removeItem("nome");
-location.reload();
+  localStorage.removeItem("nome");
+  localStorage.removeItem("icone");
+  location.reload();
 }
 
 function iniciarChat(){
+  document.getElementById("titulo").innerText = "Chat - " + nome;
+  document.getElementById("headerAvatar").src = icone;
 
-document.getElementById("titulo").innerText = "Chat - " + nome;
+  carregar();
 
-carregar();
-
-cliente
-.channel("sala1")
-.on(
-"postgres_changes",
-{
-event:"INSERT",
-schema:"public",
-table:"mensagens"
-},
-(payload)=>{
-mostrar(payload.new.nome,payload.new.texto,payload.new.id);
-}
-)
-.subscribe();
+  cliente
+    .channel("sala1")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "mensagens" },
+      (payload) => {
+        mostrar(payload.new.nome, payload.new.texto, payload.new.id, payload.new.icone);
+      }
+    )
+    .subscribe();
 }
 
-function mostrar(usuario,texto,id){
+function mostrar(usuario, texto, id, iconeUsuario){
+  if(document.getElementById("msg_" + id)) return;
 
-if(document.getElementById("msg_"+id)) return;
+  const sou_eu = usuario === nome;
+  const avatarSrc = iconeUsuario || "perfil/icone1.png";
 
-let div = document.createElement("div");
-div.id = "msg_"+id;
+  let div = document.createElement("div");
+  div.id = "msg_" + id;
+  div.className = "msg " + (sou_eu ? "eu" : "outro");
 
-div.className = "msg " + (usuario===nome ? "eu":"outro");
+  div.innerHTML = `
+    <img class="msg-avatar" src="${avatarSrc}" alt="${usuario}" onerror="this.style.display='none'">
+    <div>
+      <div class="msg-nome">${sou_eu ? "Você" : usuario}</div>
+      <div class="msg-bubble">${texto}</div>
+    </div>
+  `;
 
-div.innerHTML = "<b>"+usuario+"</b><br>"+texto;
-
-chat.appendChild(div);
-chat.scrollTop = chat.scrollHeight;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
 async function carregar(){
+  chat.innerHTML = "";
 
-chat.innerHTML="";
+  const { data } = await cliente
+    .from("mensagens")
+    .select("*")
+    .order("id", { ascending: true });
 
-const {data} = await cliente
-.from("mensagens")
-.select("*")
-.order("id",{ascending:true});
-
-data.forEach(item=>{
-mostrar(item.nome,item.texto,item.id);
-});
+  if(data) data.forEach(item => {
+    mostrar(item.nome, item.texto, item.id, item.icone);
+  });
 }
 
 async function enviar(){
+  let texto = campo.value.trim();
+  if(texto === "") return;
+  campo.value = "";
 
-let texto = campo.value.trim();
-
-if(texto=="") return;
-
-campo.value="";
-
-await cliente
-.from("mensagens")
-.insert([
-{
-nome:nome,
-texto:texto
-}
-]);
+  await cliente
+    .from("mensagens")
+    .insert([{ nome: nome, texto: texto, icone: icone }]);
 }
 
-campo.addEventListener("keydown",function(e){
-if(e.key==="Enter") enviar();
+campo.addEventListener("keydown", function(e){
+  if(e.key === "Enter") enviar();
 });
 
-document.getElementById("nomeInput").addEventListener("keydown",function(e){
-if(e.key==="Enter") salvarNome();
+document.getElementById("nomeInput").addEventListener("keydown", function(e){
+  if(e.key === "Enter") salvarNome();
 });
 </script>
 
