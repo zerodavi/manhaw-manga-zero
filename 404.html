@@ -296,6 +296,7 @@ font-weight:bold;
 
 <input type="text" id="nomeInput" placeholder="Seu nome">
 <button id="entrarBtn" onclick="salvarNome()">Entrar no Chat</button>
+<button id="cancelarBtn" onclick="cancelarEdicao()" style="display:none;width:100%;padding:12px;margin-top:10px;border:2px solid #333;border-radius:10px;font-size:15px;font-weight:bold;background:transparent;color:#aaa;cursor:pointer;">← Cancelar</button>
 </div>
 </div>
 
@@ -356,13 +357,27 @@ function salvarNome(){
   localStorage.setItem("nome", nome);
   localStorage.setItem("icone", icone);
   document.getElementById("loginTela").style.display = "none";
-  iniciarChat();
+  document.getElementById("cancelarBtn").style.display = "none";
+  document.getElementById("entrarBtn").textContent = "Entrar no Chat";
+  document.getElementById("titulo").innerText = "Chat - " + nome;
+  document.getElementById("headerAvatar").src = icone;
+  if(!document.getElementById("chat").children.length){
+    iniciarChat();
+  }
 }
 
 function trocarNome(){
-  localStorage.removeItem("nome");
-  localStorage.removeItem("icone");
-  location.reload();
+  document.getElementById("nomeInput").value = nome || "";
+  document.getElementById("entrarBtn").textContent = "Salvar";
+  document.getElementById("cancelarBtn").style.display = "block";
+  document.getElementById("loginTela").style.display = "flex";
+  document.getElementById("nomeInput").focus();
+}
+
+function cancelarEdicao(){
+  document.getElementById("loginTela").style.display = "none";
+  document.getElementById("cancelarBtn").style.display = "none";
+  document.getElementById("entrarBtn").textContent = "Entrar no Chat";
 }
 
 function iniciarChat(){
