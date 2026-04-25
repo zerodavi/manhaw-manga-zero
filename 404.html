@@ -2,7 +2,9 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#00c853">
 <title>Chat Online</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -21,6 +23,10 @@ color:#fff;
 display:flex;
 flex-direction:column;
 height:100vh;
+height:100dvh;
+overflow:hidden;
+position:fixed;
+width:100%;
 }
 
 /* TELA CADASTRO */
@@ -30,17 +36,20 @@ inset:0;
 background:linear-gradient(135deg,#0f0f0f,#1c1c1c);
 display:flex;
 justify-content:center;
-align-items:center;
+align-items:flex-start;
 z-index:999;
-padding:20px;
+padding:16px;
+overflow-y:auto;
+-webkit-overflow-scrolling:touch;
 }
 
 #loginBox{
 background:#1f1f1f;
-padding:30px;
+padding:24px 20px;
 border-radius:18px;
 width:100%;
 max-width:380px;
+margin:auto;
 box-shadow:0 0 25px rgba(0,0,0,.5);
 text-align:center;
 }
@@ -132,12 +141,14 @@ opacity:.9;
 header{
 background:#00c853;
 padding:10px 14px;
+padding-top:max(10px, env(safe-area-inset-top));
 display:flex;
 justify-content:space-between;
 align-items:center;
-font-size:18px;
+font-size:16px;
 font-weight:bold;
 gap:10px;
+flex-shrink:0;
 }
 
 #headerPerfil{
@@ -147,8 +158,8 @@ gap:10px;
 }
 
 #headerAvatar{
-width:38px;
-height:38px;
+width:34px;
+height:34px;
 border-radius:50%;
 object-fit:cover;
 border:2px solid rgba(255,255,255,.4);
@@ -158,17 +169,18 @@ flex-shrink:0;
 #chat{
 flex:1;
 overflow-y:auto;
-padding:15px;
+-webkit-overflow-scrolling:touch;
+padding:10px 10px;
 display:flex;
 flex-direction:column;
-gap:10px;
+gap:8px;
 }
 
 .msg{
 display:flex;
 align-items:flex-end;
-gap:8px;
-max-width:85%;
+gap:6px;
+max-width:88%;
 }
 
 .msg.eu{
@@ -181,8 +193,8 @@ align-self:flex-start;
 }
 
 .msg-avatar{
-width:34px;
-height:34px;
+width:28px;
+height:28px;
 border-radius:50%;
 object-fit:cover;
 flex-shrink:0;
@@ -194,10 +206,12 @@ border-color:#00c853;
 }
 
 .msg-bubble{
-padding:10px 14px;
+padding:8px 12px;
 border-radius:12px;
 word-break:break-word;
 max-width:100%;
+font-size:15px;
+line-height:1.4;
 }
 
 .eu .msg-bubble{
@@ -222,51 +236,68 @@ text-align:right;
 
 footer{
 display:flex;
-gap:10px;
-padding:10px;
+gap:8px;
+padding:8px 10px;
+padding-bottom:max(8px, env(safe-area-inset-bottom));
 background:#222;
+flex-shrink:0;
 }
 
 #msg{
 flex:1;
-padding:12px;
+padding:10px 12px;
 border:none;
-border-radius:8px;
+border-radius:22px;
 font-size:16px;
 outline:none;
 background:#333;
 color:#fff;
+-webkit-appearance:none;
 }
 
 footer button{
-padding:10px 16px;
+width:44px;
+height:44px;
 border:none;
-border-radius:8px;
+border-radius:50%;
 background:#00c853;
 color:#fff;
 cursor:pointer;
 font-weight:bold;
-font-size:15px;
+font-size:18px;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-shrink:0;
+-webkit-tap-highlight-color:transparent;
+touch-action:manipulation;
 }
 
-footer button:hover{
-opacity:.9;
+footer button:active{
+opacity:.75;
+transform:scale(.94);
 }
 
 #headerBtns{
 display:flex;
-gap:8px;
+gap:6px;
 }
 
 #headerBtns button{
-padding:7px 12px;
+padding:6px 10px;
 border:none;
 border-radius:8px;
 background:rgba(0,0,0,.2);
 color:#fff;
 cursor:pointer;
-font-size:13px;
+font-size:12px;
 font-weight:bold;
+-webkit-tap-highlight-color:transparent;
+touch-action:manipulation;
+}
+
+#headerBtns button:active{
+opacity:.7;
 }
 </style>
 </head>
@@ -318,79 +349,6 @@ font-weight:bold;
 </footer>
 
 <script>
-// ── WEB AUDIO API ──────────────────────────────────────────
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-let audioCtx = null;
-
-function getCtx(){
-  if(!audioCtx) audioCtx = new AudioCtx();
-  if(audioCtx.state === "suspended") audioCtx.resume();
-  return audioCtx;
-}
-
-// Som de mensagem ENVIADA — sobe de 800Hz → 1500Hz em 0.1s
-function somEnviada(){
-  const ctx = getCtx();
-  const now = ctx.currentTime;
-
-  const osc  = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(800, now);
-  osc.frequency.exponentialRampToValueAtTime(1500, now + 0.1);
-
-  gain.gain.setValueAtTime(0.2, now);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + 0.1);
-}
-
-// Som de mensagem RECEBIDA — "Bi-Du" descendente em duas notas
-function somRecebida(){
-  const ctx = getCtx();
-
-  // --- Nota 1: "Bi" (900Hz → 700Hz) ---
-  const now1 = ctx.currentTime;
-  const osc1  = ctx.createOscillator();
-  const gain1 = ctx.createGain();
-
-  osc1.type = "sine";
-  osc1.frequency.setValueAtTime(900, now1);
-  osc1.frequency.exponentialRampToValueAtTime(700, now1 + 0.08);
-
-  gain1.gain.setValueAtTime(0.2, now1);
-  gain1.gain.exponentialRampToValueAtTime(0.0001, now1 + 0.08);
-
-  osc1.connect(gain1);
-  gain1.connect(ctx.destination);
-  osc1.start(now1);
-  osc1.stop(now1 + 0.08);
-
-  // --- Nota 2: "Du" (600Hz → 300Hz) — 100ms depois ---
-  setTimeout(() => {
-    const now2 = ctx.currentTime;
-    const osc2  = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-
-    osc2.type = "sine";
-    osc2.frequency.setValueAtTime(600, now2);
-    osc2.frequency.exponentialRampToValueAtTime(300, now2 + 0.1);
-
-    gain2.gain.setValueAtTime(0.2, now2);
-    gain2.gain.exponentialRampToValueAtTime(0.0001, now2 + 0.1);
-
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now2);
-    osc2.stop(now2 + 0.1);
-  }, 100);
-}
-// ────────────────────────────────────────────────────────────
-
 const url = "https://swenhgmatpxuqjhdghuv.supabase.co";
 const key = "sb_publishable__kkMzLJQtt_My1sPZZ35hw_vpsJV4HN";
 
@@ -477,8 +435,6 @@ function mostrar(usuario, texto, id, iconeUsuario){
   const sou_eu = usuario === nome;
   const avatarSrc = iconeUsuario || "perfil/icone1.png";
 
-  if(!sou_eu) somRecebida();
-
   let div = document.createElement("div");
   div.id = "msg_" + id;
   div.className = "msg " + (sou_eu ? "eu" : "outro");
@@ -503,20 +459,15 @@ async function carregar(){
     .select("*")
     .order("id", { ascending: true });
 
-  const _som = somRecebida;
-  somRecebida = () => {};
   if(data) data.forEach(item => {
     mostrar(item.nome, item.texto, item.id, item.icone);
   });
-  somRecebida = _som;
 }
 
 async function enviar(){
   let texto = campo.value.trim();
   if(texto === "") return;
   campo.value = "";
-
-  somEnviada();
 
   await cliente
     .from("mensagens")
@@ -530,6 +481,15 @@ campo.addEventListener("keydown", function(e){
 document.getElementById("nomeInput").addEventListener("keydown", function(e){
   if(e.key === "Enter") salvarNome();
 });
+
+// Corrige altura no Android quando teclado abre/fecha
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", () => {
+    const h = window.visualViewport.height;
+    document.body.style.height = h + "px";
+    chat.scrollTop = chat.scrollHeight;
+  });
+}
 </script>
 
 </body>
