@@ -1,860 +1,420 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-tema="escuro">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal de Notícias</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Chat Online</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Josefin+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #080b0f;
-  --surface: #0e1318;
-  --surface2: #131920;
-  --border: #1e2730;
-  --border2: #28333d;
-  --text: #dce8f0;
-  --muted: #6a7f8e;
-  --muted2: #4a5d6b;
-  --accent: #c8a96e;
-  --accent2: #e2c898;
-  --accent-dim: rgba(200,169,110,0.12);
-  --red: #c0392b;
-  --green: #1a6b3a;
-  --green2: #21854a;
-  --white: #f5f0e8;
+/* ── VARIÁVEIS DE TEMA ── */
+[data-tema="escuro"]{
+  --bg:#111; --bg2:#1c1c1c; --box:#1f1f1f; --input:#2a2a2a;
+  --footer:#222; --bubble-o:#333; --txt:#fff; --txt2:#aaa;
+  --border:#333; --menu-bg:#1f1f1f; --menu-hover:#2a2a2a;
+  --sala-btn:#2a2a2a; --sala-ativo:#162e1e; --msg-input:#333;
+  --shadow:rgba(0,0,0,.5);
+}
+[data-tema="claro"]{
+  --bg:#f0f4f8; --bg2:#e2e8f0; --box:#ffffff; --input:#edf2f7;
+  --footer:#e2e8f0; --bubble-o:#e2e8f0; --txt:#1a202c; --txt2:#718096;
+  --border:#cbd5e0; --menu-bg:#ffffff; --menu-hover:#f0f4f8;
+  --sala-btn:#f0f4f8; --sala-ativo:#c6f6d5; --msg-input:#ffffff;
+  --shadow:rgba(0,0,0,.15);
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html{ overscroll-behavior:none; }
 
-body {
-  font-family: 'Cormorant Garamond', serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
+body{
+  font-family:Arial,sans-serif;
+  background:var(--bg); color:var(--txt);
+  display:flex; flex-direction:column;
+  height:100vh; height:100dvh;
+  overflow:hidden;
+  transition:background .3s, color .3s;
 }
 
-/* ── BACKGROUND TEXTURE ── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(200,169,110,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(200,169,110,0.04) 0%, transparent 60%);
-  pointer-events: none;
-  z-index: 0;
+/* ── TELAS MODAIS ── */
+.tela{
+  position:fixed; inset:0;
+  background:linear-gradient(135deg,var(--bg),var(--bg2));
+  display:flex; justify-content:center; align-items:center;
+  z-index:999;
+  padding:20px;
+  padding-top:max(20px, env(safe-area-inset-top));
+  padding-bottom:max(20px, env(safe-area-inset-bottom));
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
+.box{
+  background:var(--box); padding:30px; border-radius:18px;
+  width:100%; max-width:380px;
+  box-shadow:0 0 25px var(--shadow);
+  text-align:center; transition:background .3s;
+}
+.box h1{ font-size:26px; margin-bottom:8px; color:#00c853; }
+.box p{ font-size:14px; color:var(--txt2); margin-bottom:20px; }
 
-/* ── TOP BAR ── */
-.topbar {
-  border-bottom: 1px solid var(--border);
-  padding: 6px 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  color: var(--muted);
-  text-transform: uppercase;
-  position: relative;
-  z-index: 10;
+.campo{
+  width:100%; padding:14px;
+  border:2px solid var(--border); border-radius:10px;
+  font-size:16px; margin-bottom:14px; outline:none;
+  background:var(--input); color:var(--txt);
+  transition:background .3s, color .3s, border-color .3s;
+  -webkit-appearance:none; appearance:none;
 }
-#data-hora { color: var(--accent); }
+.campo::placeholder{ color:var(--txt2); }
+.campo:focus{ border-color:#00c853; }
+
+.btn{
+  width:100%; padding:14px; border:none; border-radius:10px;
+  font-size:16px; font-weight:bold; cursor:pointer;
+  transition:opacity .2s; margin-bottom:10px;
+  min-height:48px;
+}
+.btn:active{ opacity:.8; }
+.btn-verde{ background:#00c853; color:#fff; }
+.btn-outline{ background:transparent; color:var(--txt2); border:2px solid var(--border); }
+
+/* ÍCONES EMOJI */
+.icones-titulo{ font-size:13px; color:var(--txt2); margin-bottom:12px; text-align:left; }
+#iconeGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+.icone-opcao{
+  cursor:pointer; border-radius:50%; border:3px solid transparent;
+  transition:border-color .2s,transform .2s;
+  aspect-ratio:1; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--input);
+  font-size:26px; line-height:1;
+  min-height:56px;
+}
+.icone-opcao img{ width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+.icone-opcao:active{ transform:scale(.9); }
+.icone-opcao.selecionado{ border-color:#00c853; box-shadow:0 0 10px rgba(0,200,83,.5); }
+
+/* ── SALA ── */
+.sala-opcoes{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+.sala-btn{
+  padding:16px; border-radius:12px; border:2px solid var(--border);
+  background:var(--sala-btn); color:var(--txt); font-size:15px; cursor:pointer;
+  transition:border-color .2s,background .2s; text-align:left;
+  display:flex; align-items:center; gap:12px; min-height:64px;
+}
+.sala-btn:active{ opacity:.8; }
+.sala-btn.ativo{ border-color:#00c853; background:var(--sala-ativo); }
+.sala-icon{ font-size:24px; flex-shrink:0; }
+.sala-nome{ font-weight:bold; font-size:15px; }
+.sala-desc{ font-size:12px; color:var(--txt2); margin-top:2px; }
+.privada-campos{
+  display:none; background:var(--input); border-radius:12px;
+  padding:16px; margin-bottom:14px; text-align:left;
+}
+.privada-campos.visivel{ display:block; }
+.privada-campos label{ display:block; font-size:12px; color:var(--txt2); margin-bottom:6px; }
+.privada-campos .campo{ margin-bottom:0; }
 
 /* ── HEADER ── */
-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(8,11,15,0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
+header{
+  background:#00c853; padding:10px 14px;
+  display:flex; justify-content:space-between; align-items:center;
+  gap:10px; position:relative; z-index:100; flex-shrink:0;
+  padding-left:max(14px, env(safe-area-inset-left));
+  padding-right:max(14px, env(safe-area-inset-right));
+  padding-top:max(10px, env(safe-area-inset-top));
+}
+#headerPerfil{ display:flex; align-items:center; gap:10px; min-width:0; flex:1; }
+#headerInfo{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.header-avatar-wrap{
+  width:38px; height:38px; border-radius:50%;
+  border:2px solid rgba(255,255,255,.4); flex-shrink:0;
+  background:rgba(0,0,0,.2); font-size:22px;
+  display:flex; align-items:center; justify-content:center;
+  line-height:1; overflow:hidden;
+}
+#titulo{ font-size:16px; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#salaBadge{
+  font-size:11px; background:rgba(0,0,0,.25); padding:2px 8px;
+  border-radius:20px; color:rgba(255,255,255,.9);
+  display:inline-flex; align-items:center; gap:4px; width:fit-content;
+  white-space:nowrap;
 }
 
-.header-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 30px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
+#btnConfig{
+  background:rgba(0,0,0,.2); border:none; border-radius:10px;
+  color:#fff; cursor:pointer; font-size:20px;
+  min-width:44px; min-height:44px;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .2s; flex-shrink:0; user-select:none;
 }
+#btnConfig:active{ background:rgba(0,0,0,.5); }
 
-.logo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-  text-decoration: none;
+/* ── MINI MENU ── */
+#menuConfig{
+  position:absolute; top:calc(100% + 6px); right:14px;
+  background:var(--menu-bg); border:1px solid var(--border);
+  border-radius:14px; box-shadow:0 8px 32px var(--shadow);
+  width:235px; overflow:hidden;
+  display:none; z-index:200;
+  animation:menuAbrir .18s ease;
 }
-.logo-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.7rem;
-  font-weight: 700;
-  color: var(--accent2);
-  letter-spacing: 0.04em;
-  line-height: 1;
+#menuConfig.aberto{ display:block; }
+@keyframes menuAbrir{
+  from{ opacity:0; transform:translateY(-8px) scale(.97); }
+  to{   opacity:1; transform:translateY(0) scale(1); }
 }
-.logo-sub {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.55rem;
-  letter-spacing: 0.3em;
-  color: var(--muted);
-  text-transform: uppercase;
+.menu-titulo{
+  font-size:11px; font-weight:bold; color:var(--txt2);
+  letter-spacing:.08em; text-transform:uppercase;
+  padding:12px 16px 6px;
 }
+.menu-item{
+  display:flex; align-items:center; gap:12px;
+  padding:13px 16px; cursor:pointer; font-size:14px;
+  color:var(--txt); transition:background .15s;
+  border:none; background:transparent; width:100%; text-align:left;
+  min-height:48px;
+}
+.menu-item:active{ background:var(--menu-hover); }
+.menu-item .mi-icon{ font-size:18px; flex-shrink:0; width:22px; text-align:center; }
+.menu-item .mi-label{ flex:1; }
+.menu-divider{ border:none; border-top:1px solid var(--border); margin:4px 0; }
 
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.toggle{ position:relative; width:40px; height:22px; flex-shrink:0; }
+.toggle input{ opacity:0; width:0; height:0; }
+.slider{
+  position:absolute; inset:0; background:#555;
+  border-radius:22px; cursor:pointer; transition:.3s;
 }
+.slider:before{
+  content:""; position:absolute; width:16px; height:16px;
+  left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s;
+}
+input:checked + .slider{ background:#00c853; }
+input:checked + .slider:before{ transform:translateX(18px); }
+.menu-item.perigo{ color:#ff5252; }
+.menu-item.perigo:active{ background:rgba(255,82,82,.1); }
 
-#header-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* ── CHAT ── */
+#chat{
+  flex:1; overflow-y:auto; padding:15px;
+  display:flex; flex-direction:column; gap:10px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  min-height:0;
 }
+#chat::-webkit-scrollbar{ width:5px; }
+#chat::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px; }
 
-.user-greeting {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.78rem;
-  color: var(--muted);
-  letter-spacing: 0.05em;
+.msg{ display:flex; align-items:flex-end; gap:8px; max-width:85%; }
+.msg.eu{ align-self:flex-end; flex-direction:row-reverse; }
+.msg.outro{ align-self:flex-start; }
+.msg-avatar{
+  width:34px; height:34px; border-radius:50%; flex-shrink:0;
+  border:2px solid var(--border); background:var(--input);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; line-height:1; overflow:hidden;
 }
-.user-greeting b { color: var(--accent2); font-weight: 600; }
+.msg.eu .msg-avatar{ border-color:#00c853; }
+.msg-bubble{
+  padding:10px 14px; border-radius:12px;
+  word-break:break-word; max-width:100%; line-height:1.5;
+}
+.eu  .msg-bubble{ background:#00c853; color:#fff; border-bottom-right-radius:4px; }
+.outro .msg-bubble{ background:var(--bubble-o); color:var(--txt); border-bottom-left-radius:4px; }
+.msg-nome{ font-size:11px; color:var(--txt2); margin-bottom:3px; }
+.eu .msg-nome{ text-align:right; }
 
-.btn {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border: none;
-  border-radius: 2px;
-  cursor: pointer;
-  padding: 8px 18px;
-  transition: all 0.25s;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+#avisoSala{
+  display:none; flex-direction:column; align-items:center;
+  justify-content:center; gap:8px; color:var(--txt2);
+  font-size:14px; padding:40px 20px; text-align:center; flex:1;
 }
-.btn-login {
-  background: var(--accent);
-  color: #080b0f;
-  font-weight: 600;
-}
-.btn-login:hover { background: var(--accent2); transform: translateY(-1px); }
-
-.btn-logout {
-  background: transparent;
-  border: 1px solid var(--border2);
-  color: var(--muted);
-}
-.btn-logout:hover { border-color: var(--muted); color: var(--text); }
-
-.btn-adm {
-  background: transparent;
-  border: 1px solid var(--accent);
-  color: var(--accent);
-}
-.btn-adm:hover { background: var(--accent-dim); }
-
-/* ── HERO SECTION ── */
-.hero {
-  text-align: center;
-  padding: 60px 20px 40px;
-  position: relative;
-  z-index: 1;
-  max-width: 700px;
-  margin: 0 auto;
-}
-.hero-eyebrow {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.68rem;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 14px;
-}
-.hero h1 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(2.4rem, 5vw, 3.8rem);
-  font-weight: 300;
-  color: var(--white);
-  line-height: 1.15;
-  margin-bottom: 12px;
-  letter-spacing: -0.01em;
-}
-.hero h1 em { font-style: italic; color: var(--accent2); }
-.hero-divider {
-  width: 50px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  margin: 20px auto;
-}
-
-/* ── LAYOUT ── */
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 30px 60px;
-  position: relative;
-  z-index: 1;
-}
-
-/* ── SECTION HEADER ── */
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 28px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border);
-}
-.section-label {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.68rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-.section-line {
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-.section-count {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.65rem;
-  color: var(--muted2);
-  letter-spacing: 0.1em;
-}
-
-/* ── NEWS GRID ── */
-#noticias {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-/* DESTAQUE — primeiro item ocupa linha inteira */
-#noticias .card:first-child {
-  grid-column: 1 / -1;
-  flex-direction: row;
-}
-#noticias .card:first-child .card-img {
-  width: 280px;
-  height: 200px;
-  flex-shrink: 0;
-}
-#noticias .card:first-child .card-body {
-  padding: 28px 30px;
-}
-#noticias .card:first-child .card-title {
-  font-size: 1.65rem;
-}
-
-/* CARD PADRÃO */
-.card {
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: background 0.2s;
-  cursor: pointer;
-  position: relative;
-}
-.card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--accent-dim);
-  opacity: 0;
-  transition: opacity 0.25s;
-  pointer-events: none;
-}
-.card:hover { background: var(--surface2); }
-.card:hover::after { opacity: 1; }
-
-.card-img {
-  width: 100%;
-  height: 175px;
-  object-fit: cover;
-  display: block;
-  filter: brightness(0.92) saturate(0.85);
-  transition: filter 0.3s;
-}
-.card:hover .card-img { filter: brightness(1) saturate(0.95); }
-
-.card-img-placeholder {
-  width: 100%;
-  height: 175px;
-  background: linear-gradient(135deg, var(--surface2) 0%, var(--border) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted2);
-  font-size: 2rem;
-}
-
-.card-body {
-  padding: 20px 22px 22px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.card-category {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.card-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--white);
-  line-height: 1.3;
-  letter-spacing: 0.01em;
-}
-
-.card-text {
-  font-size: 0.9rem;
-  font-weight: 300;
-  color: var(--muted);
-  line-height: 1.7;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.card-footer {
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.card-date {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  color: var(--muted2);
-}
-.card-read {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.card:hover .card-read { opacity: 1; }
-
-/* ── EMPTY STATE ── */
-.empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 70px 20px;
-  background: var(--surface);
-}
-.empty-icon { font-size: 2.5rem; margin-bottom: 16px; opacity: 0.4; }
-.empty-state h3 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.4rem;
-  font-weight: 300;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-.empty-state p {
-  font-size: 0.85rem;
-  color: var(--muted2);
-}
-
-/* ── LOADING ── */
-.loading-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.skeleton-card {
-  background: var(--surface);
-  height: 260px;
-  position: relative;
-  overflow: hidden;
-}
-.skeleton-card:first-child { grid-column: 1 / -1; height: 200px; }
-.skeleton-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
-  animation: shimmer 1.6s infinite;
-}
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* ── MODAL ── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(8,11,15,0.85);
-  backdrop-filter: blur(8px);
-  z-index: 200;
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-.modal-overlay.open { display: flex; }
-
-.modal {
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 6px;
-  padding: 40px 36px;
-  width: 100%;
-  max-width: 400px;
-  position: relative;
-  animation: slideUp 0.3s ease;
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.modal-header {
-  margin-bottom: 28px;
-}
-.modal-eyebrow {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 6px;
-}
-.modal-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--white);
-}
-
-.field {
-  margin-bottom: 14px;
-}
-.field label {
-  display: block;
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-.field input {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border2);
-  border-radius: 3px;
-  padding: 11px 14px;
-  color: var(--text);
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.field input:focus { border-color: var(--accent); }
-
-.btn-submit {
-  width: 100%;
-  background: var(--accent);
-  color: #080b0f;
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  border: none;
-  border-radius: 3px;
-  padding: 13px;
-  cursor: pointer;
-  margin-top: 6px;
-  transition: background 0.2s, transform 0.15s;
-}
-.btn-submit:hover { background: var(--accent2); transform: translateY(-1px); }
-
-.modal-toggle {
-  text-align: center;
-  margin-top: 16px;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-.modal-toggle span {
-  color: var(--accent);
-  cursor: pointer;
-  margin-left: 4px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.modal-toggle span:hover { color: var(--accent2); }
-
-.modal-close {
-  position: absolute;
-  top: 14px; right: 16px;
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 1.2rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 4px 6px;
-  border-radius: 2px;
-  transition: color 0.2s;
-}
-.modal-close:hover { color: var(--text); }
-
-#modal-erro {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.75rem;
-  color: #e87070;
-  margin-top: 10px;
-  min-height: 16px;
-  letter-spacing: 0.05em;
-}
-
-/* ── TOAST ── */
-.toast {
-  position: fixed;
-  bottom: 28px;
-  right: 28px;
-  z-index: 300;
-  background: var(--surface2);
-  border: 1px solid var(--accent);
-  border-left: 3px solid var(--accent);
-  color: var(--accent2);
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  padding: 12px 20px;
-  border-radius: 3px;
-  display: none;
-  animation: fadeInUp 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-}
-.toast.show { display: block; }
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+#avisoSala.visivel{ display:flex; }
+#avisoSala .aviso-icon{ font-size:40px; }
 
 /* ── FOOTER ── */
-footer {
-  border-top: 1px solid var(--border);
-  padding: 24px 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
-  z-index: 1;
+footer{
+  display:flex; gap:10px; padding:10px;
+  background:var(--footer); transition:background .3s;
+  flex-shrink:0; align-items:center;
+  padding-left:max(10px, env(safe-area-inset-left));
+  padding-right:max(10px, env(safe-area-inset-right));
+  padding-bottom:max(10px, env(safe-area-inset-bottom));
 }
-.footer-logo {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1rem;
-  color: var(--accent);
-  letter-spacing: 0.05em;
+#msg{
+  flex:1; padding:12px; border:2px solid var(--border);
+  border-radius:8px; font-size:16px; outline:none;
+  background:var(--msg-input); color:var(--txt);
+  transition:background .3s, color .3s;
+  min-height:48px; -webkit-appearance:none; appearance:none;
 }
-.footer-copy {
-  font-family: 'Josefin Sans', sans-serif;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  color: var(--muted2);
-  text-transform: uppercase;
+#msg:focus{ border-color:#00c853; }
+#msg::placeholder{ color:var(--txt2); }
+footer button{
+  padding:0 16px; border:none; border-radius:8px;
+  background:#00c853; color:#fff; cursor:pointer;
+  font-size:18px; min-width:50px; min-height:48px;
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
 }
+footer button:active{ opacity:.75; transform:scale(.95); }
 
-/* ── RESPONSIVE ── */
-@media (max-width: 680px) {
-  .topbar { display: none; }
-  .header-inner { padding: 0 16px; }
-  .container { padding: 0 16px 50px; }
-  .hero { padding: 40px 16px 30px; }
-  #noticias { grid-template-columns: 1fr; }
-  #noticias .card:first-child { grid-column: 1; flex-direction: column; }
-  #noticias .card:first-child .card-img { width: 100%; }
-  .loading-grid { grid-template-columns: 1fr; }
-  .loading-grid .skeleton-card:first-child { grid-column: 1; }
-  footer { flex-direction: column; gap: 10px; text-align: center; }
+/* ── MODAL ── */
+#modalConfirm{
+  position:fixed; inset:0; background:rgba(0,0,0,.6);
+  display:none; align-items:center; justify-content:center;
+  z-index:1000; padding:20px;
+}
+#modalConfirm.aberto{ display:flex; }
+.modal-box{
+  background:var(--box); border-radius:16px; padding:28px;
+  max-width:320px; width:100%; text-align:center;
+  box-shadow:0 8px 32px var(--shadow);
+}
+.modal-box h3{ margin-bottom:10px; color:#ff5252; font-size:20px; }
+.modal-box p{ color:var(--txt2); font-size:14px; margin-bottom:22px; }
+.modal-btns{ display:flex; gap:10px; }
+.modal-btns button{
+  flex:1; padding:13px; border-radius:10px;
+  font-size:15px; font-weight:bold; cursor:pointer; border:none; min-height:48px;
+}
+#btnConfirmSim{ background:#ff5252; color:#fff; }
+#btnConfirmNao{ background:var(--input); color:var(--txt); }
+
+@media (max-width:480px){
+  .box{ padding:20px; }
+  #iconeGrid{ grid-template-columns:repeat(4,1fr); gap:8px; }
+  .icone-opcao{ font-size:22px; min-height:50px; }
 }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <span id="data-hora"></span>
-  <span>Informação com credibilidade</span>
+<!-- LOGIN -->
+<div id="loginTela" class="tela">
+<div class="box">
+  <h1>💬 Chat Online</h1>
+  <p>Escolha um ícone e digite seu nome</p>
+  <p class="icones-titulo">Escolha seu ícone de perfil:</p>
+  <div id="iconeGrid">
+    <div class="icone-opcao selecionado" data-icone="perfil/icone1.png" onclick="selecionarIcone(this)">
+      <img src="perfil/icone1.png" alt="Ícone 1" onerror="this.parentElement.innerHTML='<span style=font-size:28px;line-height:1>🐱</span>'">
+    </div>
+    <div class="icone-opcao" data-icone="perfil/icone2.png" onclick="selecionarIcone(this)">
+      <img src="perfil/icone2.png" alt="Ícone 2" onerror="this.parentElement.innerHTML='<span style=font-size:28px;line-height:1>🐶</span>'">
+    </div>
+    <div class="icone-opcao" data-icone="perfil/icone3.png" onclick="selecionarIcone(this)">
+      <img src="perfil/icone3.png" alt="Ícone 3" onerror="this.parentElement.innerHTML='<span style=font-size:28px;line-height:1>🦊</span>'">
+    </div>
+    <div class="icone-opcao" data-icone="perfil/icone4.png" onclick="selecionarIcone(this)">
+      <img src="perfil/icone4.png" alt="Ícone 4" onerror="this.parentElement.innerHTML='<span style=font-size:28px;line-height:1>🐻</span>'">
+    </div>
+  </div>
+  <input type="text" id="nomeInput" class="campo" placeholder="Seu nome"
+         autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
+  <button id="entrarBtn" class="btn btn-verde" onclick="salvarNome()">Continuar →</button>
+  <button id="cancelarBtn" onclick="cancelarEdicao()"
+    style="display:none;width:100%;padding:12px;border:2px solid var(--border);border-radius:10px;font-size:15px;font-weight:bold;background:transparent;color:var(--txt2);cursor:pointer;min-height:48px;">← Cancelar</button>
+</div>
 </div>
 
-<!-- HEADER -->
+<!-- SALA -->
+<div id="salaTela" class="tela" style="display:none;">
+<div class="box">
+  <h1>Escolher Sala</h1>
+  <p>Onde você quer conversar?</p>
+  <div class="sala-opcoes">
+    <div class="sala-btn ativo" id="btnSalaGeral" onclick="escolherTipoSala('geral')">
+      <span class="sala-icon">🌐</span>
+      <div><div class="sala-nome">Chat Geral</div><div class="sala-desc">Aberto para todos</div></div>
+    </div>
+    <div class="sala-btn" id="btnSalaPrivada" onclick="escolherTipoSala('privada')">
+      <span class="sala-icon">🔒</span>
+      <div><div class="sala-nome">Sala Privada</div><div class="sala-desc">Apenas quem tem o código</div></div>
+    </div>
+  </div>
+  <div id="camposPrivada" class="privada-campos">
+    <label>Código da sala:</label>
+    <input type="text" id="codigoSala" class="campo" placeholder="Ex: amigos2024"
+           autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+           oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9]/g,'')">
+  </div>
+  <button class="btn btn-verde" onclick="entrarNaSala()">Entrar na Sala</button>
+  <button class="btn btn-outline" onclick="voltarParaLogin()">← Voltar</button>
+</div>
+</div>
+
+<!-- CHAT -->
 <header>
-  <div class="header-inner">
-    <a class="logo" href="#">
-      <span class="logo-title">📰 O Portal</span>
-      <span class="logo-sub">Notícias &amp; Atualidades</span>
-    </a>
-    <div id="header-user"></div>
+  <div id="headerPerfil">
+    <div id="headerAvatarWrap" class="header-avatar-wrap">
+      <img src="perfil/icone1.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" onerror="this.remove()">
+    </div>
+    <div id="headerInfo">
+      <span id="titulo"></span>
+      <span id="salaBadge"></span>
+    </div>
+  </div>
+  <button id="btnConfig" onclick="toggleMenu(event)" title="Configurações">⚙️</button>
+  <div id="menuConfig">
+    <div class="menu-titulo">Configurações</div>
+    <button class="menu-item" onclick="menuAcao('nome')">
+      <span class="mi-icon">✏️</span><span class="mi-label">Trocar nome / ícone</span>
+    </button>
+    <button class="menu-item" onclick="menuAcao('sala')">
+      <span class="mi-icon">🚪</span><span class="mi-label">Trocar sala</span>
+    </button>
+    <hr class="menu-divider">
+    <label class="menu-item" onclick="event.stopPropagation()">
+      <span class="mi-icon">🔔</span><span class="mi-label">Som</span>
+      <label class="toggle">
+        <input type="checkbox" id="toggleSom" checked onchange="alternarSom(this)">
+        <span class="slider"></span>
+      </label>
+    </label>
+    <label class="menu-item" onclick="event.stopPropagation()">
+      <span class="mi-icon" id="icTema">🌙</span>
+      <span class="mi-label" id="labelTema">Modo escuro</span>
+      <label class="toggle">
+        <input type="checkbox" id="toggleTema" onchange="alternarTema(this)">
+        <span class="slider"></span>
+      </label>
+    </label>
+    <hr class="menu-divider">
+    <button class="menu-item perigo" onclick="menuAcao('apagar')">
+      <span class="mi-icon">🗑️</span><span class="mi-label">Apagar conta</span>
+    </button>
   </div>
 </header>
 
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-eyebrow">Portal de Notícias</div>
-  <h1>As notícias que <em>importam</em></h1>
-  <div class="hero-divider"></div>
+<div id="chat">
+  <div id="avisoSala">
+    <span class="aviso-icon">🔒</span>
+    <strong>Sala Privada</strong>
+    <span>Seja o primeiro a enviar uma mensagem aqui!</span>
+  </div>
 </div>
 
-<!-- MAIN CONTENT -->
-<div class="container">
-  <div class="section-header">
-    <span class="section-label">Últimas Notícias</span>
-    <div class="section-line"></div>
-    <span class="section-count" id="count-label">carregando...</span>
-  </div>
-
-  <!-- Loading skeleton -->
-  <div class="loading-grid" id="loading-state">
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-  </div>
-
-  <div id="noticias" style="display:none"></div>
-</div>
-
-<!-- FOOTER -->
 <footer>
-  <span class="footer-logo">📰 O Portal</span>
-  <span class="footer-copy">© 2025 · Todos os direitos reservados</span>
+  <input type="text" id="msg" placeholder="Digite mensagem..."
+         autocomplete="off" autocorrect="off" autocapitalize="sentences"
+         enterkeyhint="send">
+  <button onclick="enviar()">➤</button>
 </footer>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal" role="dialog" aria-modal="true">
-    <button class="modal-close" onclick="fecharModal()" aria-label="Fechar">✕</button>
-    <div class="modal-header">
-      <div class="modal-eyebrow" id="modal-eyebrow">Acesso à conta</div>
-      <div class="modal-title" id="modal-title">Entrar</div>
-    </div>
-
-    <div class="field" id="field-nome" style="display:none">
-      <label>Seu nome</label>
-      <input type="text" id="nome" placeholder="Como quer ser chamado?">
-    </div>
-    <div class="field">
-      <label>E-mail</label>
-      <input type="email" id="email" placeholder="seu@email.com">
-    </div>
-    <div class="field">
-      <label>Senha</label>
-      <input type="password" id="senha" placeholder="••••••••">
-    </div>
-
-    <div id="modal-erro"></div>
-
-    <button class="btn-submit" onclick="enviar()">Confirmar</button>
-
-    <div class="modal-toggle">
-      <span id="toggle-label">Não tem conta?</span>
-      <span onclick="toggleModo()">Cadastre-se</span>
+<div id="modalConfirm">
+  <div class="modal-box">
+    <h3>⚠️ Apagar conta?</h3>
+    <p>Seu nome, ícone e sala serão apagados. Você voltará para a tela inicial.</p>
+    <div class="modal-btns">
+      <button id="btnConfirmSim" onclick="confirmarApagar()">Apagar</button>
+      <button id="btnConfirmNao" onclick="fecharModal()">Cancelar</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<script>
-const { createClient } = supabase;
-const client = createClient(
-  "https://ezybnspvjnujfaxwtpnw.supabase.co",
-  "sb_publishable_CZEcsQWB4I46jjmumEEtDw_8hZinxvE"
-);
-
-let sessaoAtual = null;
-let cadastro = false;
-
-/* ── DATA/HORA ── */
-function atualizarRelogio() {
-  const agora = new Date();
-  const opts = { weekday:'long', day:'numeric', month:'long', year:'numeric' };
-  document.getElementById('data-hora').textContent =
-    agora.toLocaleDateString('pt-BR', opts) + ' · ' +
-    agora.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-}
-atualizarRelogio();
-setInterval(atualizarRelogio, 60000);
-
-/* ── MODAL ── */
-function abrirModal() {
-  document.getElementById('modal-overlay').classList.add('open');
-  document.getElementById('email').focus();
-}
-function fecharModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-  document.getElementById('modal-erro').textContent = '';
-}
-document.getElementById('modal-overlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) fecharModal();
-});
-
-function toggleModo() {
-  cadastro = !cadastro;
-  document.getElementById('modal-title').textContent = cadastro ? 'Criar conta' : 'Entrar';
-  document.getElementById('modal-eyebrow').textContent = cadastro ? 'Novo cadastro' : 'Acesso à conta';
-  document.getElementById('field-nome').style.display = cadastro ? 'block' : 'none';
-  document.getElementById('toggle-label').textContent = cadastro ? 'Já tem conta?' : 'Não tem conta?';
-  document.querySelector('.modal-toggle span:last-child').textContent = cadastro ? 'Faça login' : 'Cadastre-se';
-  document.getElementById('modal-erro').textContent = '';
-}
-
-function toast(msg, err = false) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.style.borderColor = err ? '#c0392b' : 'var(--accent)';
-  el.style.color = err ? '#e87070' : 'var(--accent2)';
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3200);
-}
-
-async function enviar() {
-  const email = document.getElementById('email').value.trim();
-  const senha = document.getElementById('senha').value;
-  const erroEl = document.getElementById('modal-erro');
-  erroEl.textContent = '';
-
-  if (!email || !senha) { erroEl.textContent = 'Preencha todos os campos.'; return; }
-
-  if (cadastro) {
-    const nome = document.getElementById('nome').value.trim();
-    const { data, error } = await client.auth.signUp({ email, password: senha, options: { data: { nome } } });
-    if (error) { erroEl.textContent = error.message; return; }
-    if (data.user) {
-      await client.from('perfis').insert([{ id: data.user.id, email: data.user.email, is_admin: false }]);
-    }
-    toast('✓ Cadastro realizado com sucesso!');
-    fecharModal();
-    if (!cadastro) toggleModo();
-  } else {
-    const { error } = await client.auth.signInWithPassword({ email, password: senha });
-    if (error) { erroEl.textContent = error.message; return; }
-    toast('✓ Login realizado!');
-    fecharModal();
-  }
-}
-
-/* ── HEADER ── */
-async function atualizarHeader() {
-  const h = document.getElementById('header-user');
-
-  if (!sessaoAtual) {
-    h.innerHTML = `<button class="btn btn-login" onclick="abrirModal()">Entrar</button>`;
-    return;
-  }
-
-  const nome = sessaoAtual.user.user_metadata?.nome || sessaoAtual.user.email;
-  const { data } = await client.from('perfis').select('is_admin').eq('id', sessaoAtual.user.id).single();
-
-  h.innerHTML = `
-    <span class="user-greeting">Olá, <b>${nome}</b></span>
-    ${data?.is_admin ? `<a href="adm.html" style="text-decoration:none"><button class="btn btn-adm">⚙ ADM</button></a>` : ''}
-    <button class="btn btn-logout" onclick="logout()">Sair</button>
-  `;
-}
-
-async function logout() {
-  await client.auth.signOut();
-  toast('Você saiu da conta.');
-}
-
-/* ── NOTÍCIAS ── */
-function formatarData(str) {
-  if (!str) return '';
-  const d = new Date(str);
-  return d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-}
-
-async function carregarNoticias() {
-  const { data, error } = await client.from('noticias').select('*').order('id', { ascending: false });
-
-  document.getElementById('loading-state').style.display = 'none';
-  const grid = document.getElementById('noticias');
-  grid.style.display = 'grid';
-
-  if (error || !data || data.length === 0) {
-    document.getElementById('count-label').textContent = '0 publicações';
-    grid.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📭</div>
-        <h3>Nenhuma notícia publicada</h3>
-        <p>Em breve novas publicações aparecerão aqui.</p>
-      </div>`;
-    return;
-  }
-
-  document.getElementById('count-label').textContent = `${data.length} publicaç${data.length === 1 ? 'ão' : 'ões'}`;
-
-  grid.innerHTML = data.map(n => `
-    <div class="card">
-      ${n.imagem
-        ? `<img class="card-img" src="${n.imagem}" alt="${n.titulo}" onerror="this.outerHTML='<div class=card-img-placeholder>📰</div>'">`
-        : `<div class="card-img-placeholder">📰</div>`}
-      <div class="card-body">
-        <span class="card-category">Notícia</span>
-        <h3 class="card-title">${n.titulo}</h3>
-        <p class="card-text">${n.conteudo}</p>
-        <div class="card-footer">
-          <span class="card-date">${formatarData(n.created_at) || 'Publicado recentemente'}</span>
-          <span class="card-read">Ler →</span>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-/* ── AUTH STATE ── */
-client.auth.onAuthStateChange((event, session) => {
-  sessaoAtual = session;
-  atualizarHeader();
-});
-
-(async () => {
-  const { data: { session } } = await client.auth.getSession();
-  sessaoAtual = session;
-  atualizarHeader();
-  carregarNoticias();
-})();
-</script>
+<script src="chat.js"></script>
 </body>
 </html>
